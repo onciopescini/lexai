@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+
+# Next.js & Node
+node_modules/
+.next/
+out/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# General
+.DS_Store
+*.log
+
+# Workspace specific
+picoclaw_agents/hotfolder/ 
+picoclaw_agents/processed/ 
+picoclaw_agents/live_event_logs/
