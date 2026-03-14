@@ -100,7 +100,7 @@ export default function DaemonDashboard() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/50">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <h3 className="text-sm font-medium text-slate-200 tracking-wider">LEXAI ORCHESTRATOR</h3>
+            <h3 className="text-sm font-medium text-slate-200 tracking-wider">Atena ORCHESTRATOR</h3>
           </div>
           <span className="text-[10px] uppercase font-mono text-slate-500 tracking-widest px-2 py-1 bg-slate-800 rounded">Live System</span>
         </div>

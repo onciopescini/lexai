@@ -124,7 +124,7 @@ export default function Home() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-sm font-bold shadow-[0_0_15px_rgba(37,99,235,0.5)]">
             L
           </div>
-          <span className="font-semibold tracking-wide text-lg text-white/90">LEXAI</span>
+          <span className="font-semibold tracking-wide text-lg text-white/90">Atena</span>
         </div>
         <div className="flex items-center gap-6 text-sm text-white/50">
           <Link href="/diff-demo" className="hover:text-white transition-colors flex items-center gap-1.5">
@@ -162,7 +162,7 @@ export default function Home() {
                   <span className="text-xs font-semibold tracking-wide text-white/80 uppercase">Intelligenza Artificiale Legale di Nuova Generazione</span>
                 </div>
                 <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/50">
-                  LEXAI
+                  Atena
                 </h1>
                 <p className="text-xl text-white/40 max-w-2xl mx-auto font-light leading-relaxed mb-4">
                   Il motore di ricerca semantico definitivo per il <strong className="text-white/70">Diritto Italiano</strong>. Interroga le fonti ufficiali usando il linguaggio naturale.
@@ -239,12 +239,12 @@ export default function Home() {
               <section className="w-full max-w-4xl mx-auto mb-20">
                 <div className="text-center mb-12">
                   <h2 className="text-2xl md:text-3xl font-bold text-white/90 mb-3">
-                    Come funziona LEXAI
+                    Come funziona Atena
                   </h2>
                   <p className="text-sm text-white/40 max-w-lg mx-auto">Tre passi per ottenere risposte legali precise, verificate e aggiornate in tempo reale.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <ProcessStep step={1} title="Chiedi" description="Scrivi la tua domanda in linguaggio naturale, come parleresti con un collega. LEXAI capisce il contesto giuridico." />
+                  <ProcessStep step={1} title="Chiedi" description="Scrivi la tua domanda in linguaggio naturale, come parleresti con un collega. Atena capisce il contesto giuridico." />
                   <ProcessStep step={2} title="Analizza" description="L'IA interroga simultaneamente 5 database ufficiali, verifica le fonti con il Protocollo Decimo Uomo e cerca aggiornamenti live." />
                   <ProcessStep step={3} title="Proteggi" description="Ricevi una risposta con fonti citate, contro-analisi critica e alert in tempo reale su cambiamenti normativi." />
                 </div>
@@ -371,7 +371,7 @@ export default function Home() {
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-50"></div>
                             <div className="flex items-center gap-3 mb-4">
                               <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-[0_0_10px_rgba(37,99,235,0.8)]">L</div>
-                              <h3 className="text-sm font-semibold text-white/60 tracking-wider uppercase">LEXAI Synthesis</h3>
+                              <h3 className="text-sm font-semibold text-white/60 tracking-wider uppercase">Atena Synthesis</h3>
                             </div>
                             <div className="prose prose-invert prose-p:leading-relaxed prose-blue max-w-none text-white/80">
                               {message.content}

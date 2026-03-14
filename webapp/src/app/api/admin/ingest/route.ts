@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `
-    Sei un assistente legale esperto di LEXAI.
+    Sei un assistente legale esperto di Atena.
     Analizza questo documento multimediale (immagine, audio o documento).
     Estrai una descrizione estremamente dettagliata in italiano.
     Trascrivi le parti udibili o leggibili rilevanti, indicando i soggetti coinvolti e i riferimenti normativi (se ce ne sono).

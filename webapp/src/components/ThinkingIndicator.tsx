@@ -18,7 +18,7 @@ const legalTips = [
   '🏛️ La Corte Costituzionale italiana è composta da 15 giudici e ha sede nel Palazzo della Consulta a Roma.',
   '📖 L\'Art. 3 della Costituzione sancisce il principio di uguaglianza: "Tutti i cittadini hanno pari dignità sociale".',
   '🔒 Il GDPR (Reg. UE 2016/679) è diventato applicabile il 25 maggio 2018 in tutti gli Stati membri UE.',
-  '⚡ LEXAI analizza fino a 5 database in parallelo per ogni tua domanda.',
+  '⚡ Atena analizza fino a 5 database in parallelo per ogni tua domanda.',
   '🤖 Il Protocollo Decimo Uomo verifica ogni risposta cercando attivamente falle e interpretazioni alternative.',
 ];
 
@@ -65,7 +65,7 @@ export default function ThinkingIndicator() {
             <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center shadow-[0_0_10px_rgba(37,99,235,0.8)]">
               <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>
-            <h3 className="text-sm font-semibold text-white/60 tracking-wider uppercase">LEXAI sta elaborando...</h3>
+            <h3 className="text-sm font-semibold text-white/60 tracking-wider uppercase">Atena sta elaborando...</h3>
           </div>
           <span className="text-xs text-white/20 font-mono tabular-nums">{elapsed}s</span>
         </div>

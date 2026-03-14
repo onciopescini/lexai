@@ -47,7 +47,7 @@ export default function GuardianFeed() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-sm font-bold shadow-[0_0_15px_rgba(37,99,235,0.5)] group-hover:scale-105 transition-transform">
             L
           </div>
-          <span className="font-semibold tracking-wide text-lg text-white/90">LEXAI</span>
+          <span className="font-semibold tracking-wide text-lg text-white/90">Atena</span>
         </Link>
         <div className="flex items-center gap-6 text-sm">
           <Link href="/" className="text-white/50 hover:text-white transition-colors">Ricerca</Link>

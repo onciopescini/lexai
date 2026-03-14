@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LEXAI — AI Legal Intelligence per il Diritto Italiano",
+  title: "Atena — AI Legal Intelligence per il Diritto Italiano",
   description: "Il motore di ricerca semantico definitivo per il Diritto Italiano. Interroga Costituzione, Codice Civile, Normattiva e fonti ufficiali usando il linguaggio naturale con Intelligenza Artificiale.",
-  keywords: "LEXAI, diritto italiano, ricerca legale, intelligenza artificiale, codice civile, costituzione italiana, AI legale, ricerca semantica",
-  authors: [{ name: "LEXAI Team" }],
+  keywords: "Atena, diritto italiano, ricerca legale, intelligenza artificiale, codice civile, costituzione italiana, AI legale, ricerca semantica",
+  authors: [{ name: "Atena Team" }],
   openGraph: {
-    title: "LEXAI — AI Legal Intelligence",
+    title: "Atena — AI Legal Intelligence",
     description: "Il motore di ricerca semantico definitivo per il Diritto Italiano. Intelligenza Artificiale al servizio della giustizia.",
     type: "website",
     locale: "it_IT",

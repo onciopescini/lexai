@@ -91,7 +91,7 @@ export default function AdminIngestionPage() {
               Hybrid Multimodal Orchestrator
             </h1>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Carica file audio (udienze, intercettazioni), immagini (visure, piantine) o PDF complessi. Gemini 2.5 Flash estrarrà le nozioni giuridiche e le inserirà direttamente nel cervello vettoriale di LEXAI.
+              Carica file audio (udienze, intercettazioni), immagini (visure, piantine) o PDF complessi. Gemini 2.5 Flash estrarrà le nozioni giuridiche e le inserirà direttamente nel cervello vettoriale di Atena.
             </p>
         </div>
 
@@ -205,7 +205,7 @@ export default function AdminIngestionPage() {
                     </>
                 ) : (
                     <>
-                        <span>Ingerisci Cavo Dati in LEXAI</span>
+                        <span>Ingerisci Cavo Dati in Atena</span>
                         <div className="absolute inset-0 h-full w-full opacity-0 group-hover:opacity-20 bg-[linear-gradient(45deg,transparent_25%,white_50%,transparent_75%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_1.5s_infinite]" />
                     </>
                 )}

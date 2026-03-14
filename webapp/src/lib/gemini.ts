@@ -79,7 +79,7 @@ export const generateTenthManRebuttal = async (query: string, context: string, o
   const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
   
   const prompt = `
-  SEI IL "DECIMO UOMO" (TENTH MAN PROTOCOL) DELLA PIATTAFORMA LEXAI.
+  SEI IL "DECIMO UOMO" (TENTH MAN PROTOCOL) DELLA PIATTAFORMA Atena.
   Il tuo compito è fornire una verifica incrociata (Cross-Examination) oggettiva della risposta dell'IA primaria.
   Non usare un tono polemico o severo. Mantieni un linguaggio analitico, esplicativo e imparziale.
   
@@ -176,7 +176,7 @@ export const factCheckResponse = async (
     const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
-    SEI IL MODULO DI FACT-CHECKING AUTONOMO DI LEXAI.
+    SEI IL MODULO DI FACT-CHECKING AUTONOMO DI Atena.
     Il tuo compito è verificare OGNI affermazione fattuale nella risposta dell'IA confrontandola con le FONTI UFFICIALI fornite.
     Devi essere IMPARZIALE, INDIPENDENTE e RIGOROSO. Non favorire né la risposta dell'IA né il tuo giudizio: basa tutto e solo sulle fonti.
 
@@ -216,7 +216,7 @@ export const factCheckResponse = async (
           "explanation": "<breve spiegazione del verdetto>"
         }
       ],
-      "methodology": "Verifica automatica incrociata contro fonti ufficiali nel database LEXAI. Ogni affermazione è stata confrontata con i documenti legali indicizzati."
+      "methodology": "Verifica automatica incrociata contro fonti ufficiali nel database Atena. Ogni affermazione è stata confrontata con i documenti legali indicizzati."
     }
     `;
 
@@ -230,7 +230,7 @@ export const factCheckResponse = async (
     
     // Validate & sanitize
     report.overall_score = Math.min(100, Math.max(0, Math.round(report.overall_score)));
-    report.methodology = "Verifica automatica incrociata contro fonti ufficiali nel database LEXAI. Ogni affermazione è stata confrontata con i documenti legali indicizzati.";
+    report.methodology = "Verifica automatica incrociata contro fonti ufficiali nel database Atena. Ogni affermazione è stata confrontata con i documenti legali indicizzati.";
     
     console.log(`[Fact-Check] Score: ${report.overall_score}/100 | Claims: ${report.total_claims} (✅${report.verified} ⚠️${report.partial} ❌${report.unsupported} ℹ️${report.opinion})`);
     

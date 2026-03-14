@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ response: 'Non ho trovato nessuna corrispondenza legale ufficiale nel database.', sources: [] });
     }
 
-    // 3. Unire il testo dei documenti recuperati (LEXAI Verified) e la Live Web Search (Perplexity)
+    // 3. Unire il testo dei documenti recuperati (Atena Verified) e la Live Web Search (Perplexity)
     let contextText = documents.map(
       (doc: {title: string; source_url: string; content: string}) => `FONTE UFFICIALE DB: ${doc.title} \nURL: ${doc.source_url}\nTESTO:\n${doc.content}\n---`
     ).join('\n');

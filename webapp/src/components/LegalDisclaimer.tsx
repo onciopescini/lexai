@@ -28,7 +28,7 @@ export default function LegalDisclaimer() {
               <div className="flex items-start gap-3">
                 <span className="text-amber-500 text-xl mt-0.5">⚖️</span>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  <strong className="text-amber-400">Avviso Legale Importante:</strong> LEXAI è uno strumento di ricerca basato su Intelligenza Artificiale. 
+                  <strong className="text-amber-400">Avviso Legale Importante:</strong> Atena è uno strumento di ricerca basato su Intelligenza Artificiale. 
                   <strong className="text-white/90"> Non fornisce consulenza legale vincolante</strong> e non sostituisce un avvocato iscritto all&apos;albo. 
                   I risultati sono a scopo informativo e di ricerca.{' '}
                   <button 
@@ -56,26 +56,26 @@ export default function LegalDisclaimer() {
           <div className="bg-[#111113] border border-white/10 rounded-3xl max-w-2xl w-[95%] max-h-[80vh] overflow-y-auto shadow-2xl p-8" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-6">
               <span className="text-3xl">⚖️</span>
-              <h2 className="text-xl font-bold text-white">Disclaimer Legale — LEXAI</h2>
+              <h2 className="text-xl font-bold text-white">Disclaimer Legale — Atena</h2>
             </div>
             
             <div className="space-y-4 text-sm text-white/70 leading-relaxed">
               <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/15">
                 <p className="font-semibold text-amber-400 mb-2">📌 Avvertenza Fondamentale</p>
-                <p>LEXAI è una piattaforma tecnologica di <strong className="text-white/90">ricerca e analisi giuridica assistita dall&apos;Intelligenza Artificiale</strong>. 
+                <p>Atena è una piattaforma tecnologica di <strong className="text-white/90">ricerca e analisi giuridica assistita dall&apos;Intelligenza Artificiale</strong>. 
                 Il servizio NON costituisce attività di consulenza legale, patrocinio, assistenza giudiziale o stragiudiziale ai sensi della Legge n. 247/2012 (Ordinamento della professione forense).</p>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <p className="font-semibold text-white/90 mb-2">🤖 Natura delle Risposte IA</p>
-                <p>Le risposte generate da LEXAI sono prodotte tramite modelli di linguaggio (LLM) e sistemi di ricerca vettoriale. Questi strumenti possono contenere <strong className="text-white/90">imprecisioni, errori o informazioni non aggiornate</strong>. 
+                <p>Le risposte generate da Atena sono prodotte tramite modelli di linguaggio (LLM) e sistemi di ricerca vettoriale. Questi strumenti possono contenere <strong className="text-white/90">imprecisioni, errori o informazioni non aggiornate</strong>. 
                 L&apos;utente è tenuto a verificare autonomamente ogni informazione prima di fare affidamento su di essa per decisioni legali.</p>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <p className="font-semibold text-white/90 mb-2">👨‍⚖️ Consulenza Professionale</p>
                 <p>Per qualsiasi questione legale effettiva, si raccomanda vivamente di <strong className="text-white/90">rivolgersi a un avvocato iscritto all&apos;albo professionale</strong>. 
-                LEXAI non si assume alcuna responsabilità per danni diretti o indiretti derivanti dall&apos;uso improprio delle informazioni fornite dalla piattaforma.</p>
+                Atena non si assume alcuna responsabilità per danni diretti o indiretti derivanti dall&apos;uso improprio delle informazioni fornite dalla piattaforma.</p>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
@@ -87,7 +87,7 @@ export default function LegalDisclaimer() {
               <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-500/15">
                 <p className="font-semibold text-blue-400 mb-2">📜 Base Giuridica</p>
                 <p>Ai sensi dell&apos;Art. 2229 c.c. e della L. 247/2012, l&apos;esercizio della professione forense è riservato agli iscritti all&apos;albo. 
-                LEXAI opera esclusivamente come <strong className="text-white/90">strumento tecnologico di supporto alla ricerca</strong>, conformemente all&apos;AI Act europeo (Regolamento UE 2024/1689).</p>
+                Atena opera esclusivamente come <strong className="text-white/90">strumento tecnologico di supporto alla ricerca</strong>, conformemente all&apos;AI Act europeo (Regolamento UE 2024/1689).</p>
               </div>
             </div>
 
@@ -107,7 +107,7 @@ export default function LegalDisclaimer() {
       <footer className="w-full border-t border-white/5 bg-[#050505]/90 backdrop-blur-md py-6 px-4 z-40 relative">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-6 text-xs text-white/30">
-            <span>© {new Date().getFullYear()} LEXAI — AI Legal Intelligence Platform</span>
+            <span>© {new Date().getFullYear()} Atena — AI Legal Intelligence Platform</span>
             <button onClick={() => setVisible(true)} className="hover:text-white/60 transition-colors underline">
               Disclaimer Legale
             </button>
@@ -115,7 +115,7 @@ export default function LegalDisclaimer() {
             <a href="#" className="hover:text-white/60 transition-colors">Cookie Policy</a>
           </div>
           <p className="text-[10px] text-white/20 text-center md:text-right max-w-sm">
-            LEXAI non fornisce consulenza legale. Consultare un avvocato per ogni decisione giuridica.
+            Atena non fornisce consulenza legale. Consultare un avvocato per ogni decisione giuridica.
           </p>
         </div>
       </footer>
