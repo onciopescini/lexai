@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getEmbeddings } from '@/lib/gemini';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
@@ -39,6 +38,8 @@ export async function POST(req: Request) {
     console.log(`[Admin Ingest] Ricevuto file: ${file.name} (${mimeType}), Titolo: ${title}`);
 
     // 1. Analisi Semantica tramite Gemini 2.5 Flash (Vision/Audio)
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `

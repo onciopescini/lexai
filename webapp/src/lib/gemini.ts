@@ -1,17 +1,23 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+let _genAI: GoogleGenerativeAI | null = null;
+function getGenAI() {
+  if (!_genAI) {
+    _genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+  }
+  return _genAI;
+}
 
 export const getEmbeddings = async (text: string) => {
   // L'utente ha l'API abilitata per "gemini-embedding-001"
-  const model = genAI.getGenerativeModel({ model: "models/gemini-embedding-001" });
+  const model = getGenAI().getGenerativeModel({ model: "models/gemini-embedding-001" });
   const result = await model.embedContent(text);
   return result.embedding.values;
 };
 
 export const generateSynthesizedAnswer = async (query: string, context: string, history: {role: string, content: string}[] = []) => {
   // Configurato sul modello ammiraglia più veloce.
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
   
   // Costruzione della memoria storica:
   const historyString = history.length > 0
@@ -42,7 +48,7 @@ export const generateSynthesizedAnswer = async (query: string, context: string, 
 
 export const generateTenthManRebuttal = async (query: string, context: string, originalAnswer: string) => {
   // Protocollo del Decimo Uomo: Usa lo stesso modello per generare la confutazione
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
   
   const prompt = `
   SEI IL "DECIMO UOMO" (TENTH MAN PROTOCOL) DELLA PIATTAFORMA LEXAI.

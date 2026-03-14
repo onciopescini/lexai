@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { getEmbeddings, generateSynthesizedAnswer, generateTenthManRebuttal, generateLegalIllustration } from '@/lib/gemini';
 import { searchPerplexity } from '@/lib/perplexity';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { query, sourceFilter, history } = await req.json();
