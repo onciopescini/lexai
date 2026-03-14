@@ -14,15 +14,13 @@ export async function POST(req: Request) {
     }
 
     // --- PHASE 7: Log della query utente per il Trend Analyzer (Citizen Guardian) ---
-    // Usiamo il client Supabase con permessi minimi (API KEY anonima/service) per salvare la ricerca
-    const { error: logError } = await supabase
+    // Fire-and-forget: non blocchiamo il pipeline per il log
+    supabase
       .from('user_queries')
-      .insert([{ query: query }]);
-      
-    if (logError) {
-       console.error("Errore durante il salvataggio log query:", logError);
-       // Non blocchiamo l'esecuzione se il log fallisce
-    }
+      .insert([{ query: query }])
+      .then(({ error: logError }) => {
+        if (logError) console.error("Errore durante il salvataggio log query:", logError);
+      });
 
     console.log(`[*] Ricerca Semantica per: "${query}" (Filtro: ${sourceFilter || 'Nessuno'})`);
 

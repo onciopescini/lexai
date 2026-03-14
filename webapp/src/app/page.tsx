@@ -5,6 +5,7 @@ import Link from 'next/link';
 import MaintenanceMode from '../components/MaintenanceMode';
 import NetworkBackground from '../components/NetworkBackground';
 import LegalFactCheck from '../components/LegalFactCheck';
+import ThinkingIndicator from '../components/ThinkingIndicator';
 
 interface LegalSource {
   title: string;
@@ -470,6 +471,13 @@ export default function Home() {
 
                     </div>
                   ))}
+
+                  {/* Thinking Indicator — shown during loading */}
+                  {loading && (
+                    <div className="flex w-full justify-start animate-fade-in-up">
+                      <ThinkingIndicator />
+                    </div>
+                  )}
 
                   {/* Floating Input when in chat mode */}
                   <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-[#050505] via-[#050505]/95 to-transparent pt-12 pb-8 px-4 z-50">

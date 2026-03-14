@@ -8,11 +8,39 @@ function getGenAI() {
   return _genAI;
 }
 
+// ============================================================================
+// EMBEDDING CACHE: LRU in-memory cache to avoid redundant API calls
+// ============================================================================
+const EMBEDDING_CACHE_MAX = 100;
+const embeddingCache = new Map<string, number[]>();
+
+function cacheSet(key: string, value: number[]) {
+  if (embeddingCache.size >= EMBEDDING_CACHE_MAX) {
+    // Evict oldest entry (first key in Map iteration order)
+    const firstKey = embeddingCache.keys().next().value;
+    if (firstKey) embeddingCache.delete(firstKey);
+  }
+  embeddingCache.set(key, value);
+}
+
 export const getEmbeddings = async (text: string) => {
-  // L'utente ha l'API abilitata per "gemini-embedding-001"
+  // Check cache first
+  const cacheKey = text.trim().toLowerCase();
+  const cached = embeddingCache.get(cacheKey);
+  if (cached) {
+    console.log('[Cache] Embedding cache HIT — skipping API call');
+    return cached;
+  }
+
   const model = getGenAI().getGenerativeModel({ model: "models/gemini-embedding-001" });
   const result = await model.embedContent(text);
-  return result.embedding.values;
+  const embedding = result.embedding.values;
+  
+  // Store in cache
+  cacheSet(cacheKey, embedding);
+  console.log(`[Cache] Embedding cached (${embeddingCache.size}/${EMBEDDING_CACHE_MAX})`);
+  
+  return embedding;
 };
 
 export const generateSynthesizedAnswer = async (query: string, context: string, history: {role: string, content: string}[] = []) => {
