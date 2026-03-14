@@ -116,3 +116,100 @@ export const generateLegalIllustration = async (topic: string) => {
     return null;
   }
 };
+
+// ============================================================================
+// FACT-CHECKER ENGINE: Auto-Validation & Independence Protocol
+// ============================================================================
+
+export interface FactCheckClaim {
+  claim: string;
+  verdict: 'verified' | 'partial' | 'unsupported' | 'opinion';
+  source_ref: string;
+  explanation: string;
+}
+
+export interface FactCheckReport {
+  overall_score: number; // 0-100
+  total_claims: number;
+  verified: number;
+  partial: number;
+  unsupported: number;
+  opinion: number;
+  claims: FactCheckClaim[];
+  methodology: string;
+}
+
+export const factCheckResponse = async (
+  query: string,
+  aiResponse: string,
+  sourceContext: string
+): Promise<FactCheckReport | null> => {
+  try {
+    const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const prompt = `
+    SEI IL MODULO DI FACT-CHECKING AUTONOMO DI LEXAI.
+    Il tuo compito è verificare OGNI affermazione fattuale nella risposta dell'IA confrontandola con le FONTI UFFICIALI fornite.
+    Devi essere IMPARZIALE, INDIPENDENTE e RIGOROSO. Non favorire né la risposta dell'IA né il tuo giudizio: basa tutto e solo sulle fonti.
+
+    DOMANDA DELL'UTENTE:
+    ${query}
+
+    RISPOSTA GENERATA DALL'IA:
+    ${aiResponse}
+
+    FONTI UFFICIALI (CONTESTO DATABASE):
+    ${sourceContext}
+
+    ISTRUZIONI RIGOROSE:
+    1. ESTRAI ogni singola affermazione fattuale/normativa dalla risposta dell'IA (ignora frasi di cortesia, connettivi, opinioni esplicite).
+    2. Per OGNI affermazione, verificala contro le FONTI UFFICIALI fornite.
+    3. Classifica ogni affermazione con uno di questi verdetti:
+       - "verified": L'affermazione è direttamente supportata dalle fonti ufficiali (citazione esatta o parafrasi fedele)
+       - "partial": L'affermazione è parzialmente corretta ma imprecisa, incompleta o semplificata
+       - "unsupported": L'affermazione NON trova riscontro nelle fonti fornite (potenziale allucinazione)
+       - "opinion": L'affermazione è un'interpretazione soggettiva, non verificabile oggettivamente
+    4. Per ogni claim, indica la fonte di riferimento (titolo documento, articolo citato) o "Nessuna fonte trovata".
+    5. Calcola un punteggio di affidabilità globale: (verified * 1.0 + partial * 0.5 + opinion * 0.3) / total_claims * 100
+
+    RISPONDI ESCLUSIVAMENTE con un JSON valido (senza markdown, senza backtick, solo JSON puro) con questa struttura:
+    {
+      "overall_score": <numero 0-100>,
+      "total_claims": <numero>,
+      "verified": <numero>,
+      "partial": <numero>,
+      "unsupported": <numero>,
+      "opinion": <numero>,
+      "claims": [
+        {
+          "claim": "<testo dell'affermazione>",
+          "verdict": "<verified|partial|unsupported|opinion>",
+          "source_ref": "<riferimento alla fonte o 'Nessuna fonte trovata'>",
+          "explanation": "<breve spiegazione del verdetto>"
+        }
+      ],
+      "methodology": "Verifica automatica incrociata contro fonti ufficiali nel database LEXAI. Ogni affermazione è stata confrontata con i documenti legali indicizzati."
+    }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().trim();
+    
+    // Clean up potential markdown wrapping
+    const cleanJson = text.replace(/^```json?\s*/, '').replace(/\s*```$/, '').trim();
+    
+    const report: FactCheckReport = JSON.parse(cleanJson);
+    
+    // Validate & sanitize
+    report.overall_score = Math.min(100, Math.max(0, Math.round(report.overall_score)));
+    report.methodology = "Verifica automatica incrociata contro fonti ufficiali nel database LEXAI. Ogni affermazione è stata confrontata con i documenti legali indicizzati.";
+    
+    console.log(`[Fact-Check] Score: ${report.overall_score}/100 | Claims: ${report.total_claims} (✅${report.verified} ⚠️${report.partial} ❌${report.unsupported} ℹ️${report.opinion})`);
+    
+    return report;
+  } catch (error) {
+    console.error("[Fact-Check] Error:", error);
+    return null;
+  }
+};
+

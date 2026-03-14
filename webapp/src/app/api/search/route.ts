@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getEmbeddings, generateSynthesizedAnswer, generateTenthManRebuttal, generateLegalIllustration } from '@/lib/gemini';
+import { getEmbeddings, generateSynthesizedAnswer, generateTenthManRebuttal, generateLegalIllustration, factCheckResponse } from '@/lib/gemini';
 import { searchPerplexity } from '@/lib/perplexity';
 
 export const dynamic = 'force-dynamic';
@@ -72,24 +72,25 @@ export async function POST(req: Request) {
     const conversationHistory = history || [];
     const aiAnswer = await generateSynthesizedAnswer(query, contextText, conversationHistory);
 
-    // 5. Fase 10/13: Protocollo Decimo Uomo e Generazione Immagine (Eseguiti in Parallelo per non bloccare)
-    console.log('[*] Attivazione Protocollo Decimo Uomo e Generazione Illustrazione (Imagen 4)...');
+    // 5. Fase 10/13: Protocollo Decimo Uomo, Generazione Immagine e Fact-Check (Eseguiti in Parallelo per non bloccare)
+    console.log('[*] Attivazione Protocollo Decimo Uomo, Generazione Illustrazione (Imagen 4) e Fact-Check Engine...');
     
-    // Per l'immagine, chiediamo di rappresentare visivamente il concetto centrale della query in modo breve
     const imageTopicPrompt = `Concetto legale da illustrare: "${query}"`;
     
-    const [tenthManAnswer, legalIllustration] = await Promise.all([
+    const [tenthManAnswer, legalIllustration, factCheckReport] = await Promise.all([
       generateTenthManRebuttal(query, contextText, aiAnswer),
-      generateLegalIllustration(imageTopicPrompt)
+      generateLegalIllustration(imageTopicPrompt),
+      factCheckResponse(query, aiAnswer, contextText)
     ]);
 
-    // 6. Ritornare all'interfaccia UI utente la risposta primaria, il decimo uomo, le fonti citate, news web live e l'immagine
+    // 6. Ritornare all'interfaccia UI utente la risposta primaria, il decimo uomo, le fonti citate, news web live, l'immagine e il fact-check
     return NextResponse.json({
       response: aiAnswer,
       contra_analysis: tenthManAnswer,
       sources: documents,
       web_updates: perplexityResult,
-      legal_illustration: legalIllustration
+      legal_illustration: legalIllustration,
+      fact_check: factCheckReport
     });
 
   } catch (error: any) {

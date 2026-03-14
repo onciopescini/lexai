@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import MaintenanceMode from '../components/MaintenanceMode';
 import NetworkBackground from '../components/NetworkBackground';
+import LegalFactCheck from '../components/LegalFactCheck';
 
 interface LegalSource {
   title: string;
@@ -59,7 +60,7 @@ function ProcessStep({ step, title, description }: { step: number; title: string
 
 
 export default function Home() {
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string, sources?: LegalSource[], contra_analysis?: string, web_updates?: string, legal_illustration?: string }[]>([]);
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string, sources?: LegalSource[], contra_analysis?: string, web_updates?: string, legal_illustration?: string, fact_check?: any }[]>([]);
   const [query, setQuery] = useState('');
   const [sourceFilter, setSourceFilter] = useState('Tutte le Fonti');
   const [loading, setLoading] = useState(false);
@@ -100,7 +101,8 @@ export default function Home() {
            sources: data.sources, 
            contra_analysis: data.contra_analysis, 
            web_updates: data.web_updates,
-           legal_illustration: data.legal_illustration
+           legal_illustration: data.legal_illustration,
+           fact_check: data.fact_check
          }]);
       }
 
@@ -412,6 +414,11 @@ export default function Home() {
                                     </div>
                                  </div>
                               </div>
+                            )}
+
+                            {/* FACT-CHECK AUTO-VALIDATION */}
+                            {message.fact_check && (
+                              <LegalFactCheck report={message.fact_check} />
                             )}
                           </div>
 
