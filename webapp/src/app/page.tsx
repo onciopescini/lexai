@@ -156,7 +156,7 @@ export default function Home() {
               <section className="text-center mt-20 mb-6 animate-fade-in-up">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 mb-6 backdrop-blur-md">
                   <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                  <span className="text-xs font-semibold tracking-wide text-white/80 uppercase">Silicon Valley Grade Intelligence</span>
+                  <span className="text-xs font-semibold tracking-wide text-white/80 uppercase">Intelligenza Artificiale Legale di Nuova Generazione</span>
                 </div>
                 <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/50">
                   LEXAI
