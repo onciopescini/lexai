@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getEmbeddings, generateSynthesizedAnswer, generateTenthManRebuttal, generateLegalIllustration, factCheckResponse } from '@/lib/gemini';
 import { searchPerplexity } from '@/lib/perplexity';
+import { rerankDocuments } from '@/lib/groq';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,8 +57,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ response: 'Non ho trovato nessuna corrispondenza legale ufficiale nel database.', sources: [] });
     }
 
+    // 2.5. Semantic Reranking via Groq (ported from GravityClaw)
+    // Reorders documents by actual relevance to the query, not just vector similarity
+    let rankedDocs = documents;
+    try {
+      rankedDocs = await rerankDocuments(query, documents);
+      console.log('[*] Groq reranking completato.');
+    } catch (_e) {
+      console.log('[*] Reranking skipped (Groq unavailable), using vector similarity order.');
+    }
+
     // 3. Unire il testo dei documenti recuperati (Atena Verified) e la Live Web Search (Perplexity)
-    let contextText = documents.map(
+    let contextText = rankedDocs.map(
       (doc: {title: string; source_url: string; content: string}) => `FONTE UFFICIALE DB: ${doc.title} \nURL: ${doc.source_url}\nTESTO:\n${doc.content}\n---`
     ).join('\n');
 
@@ -85,7 +96,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       response: aiAnswer,
       contra_analysis: tenthManAnswer,
-      sources: documents,
+      sources: rankedDocs,
       web_updates: perplexityResult,
       legal_illustration: legalIllustration,
       fact_check: factCheckReport

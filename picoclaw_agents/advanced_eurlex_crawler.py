@@ -27,13 +27,35 @@ class EurLexCrawler:
     def __init__(self):
         self.base_url = "https://eur-lex.europa.eu/legal-content/IT/TXT/HTML/"
         self.documents = []
-        self.headers = {'User-Agent': 'PicoClaw/2.0 (Legal AI Ingestion Agent EU)'}
+        self.headers = {'User-Agent': 'PicoClaw/3.0 (Atena Legal AI - EUR-Lex Agent)'}
         
-        # Lista di prova: [GDPR, Direttiva Copyright, AI Act (se disponibile, altrimenti altro)]
+        # Catalogo completo delle principali normative UE rilevanti per il diritto italiano
         self.target_celex_ids = [
-            "32016R0679", # GDPR
-            "32019L0790", # Direttiva Copyright (DSM)
-            "32000L0031", # Direttiva E-commerce
+            # === Privacy & Dati ===
+            "32016R0679",  # GDPR — Regolamento Generale sulla Protezione dei Dati
+            "32002L0058",  # Direttiva ePrivacy
+            "32016L0680",  # Direttiva Polizia (protezione dati settore penale)
+            # === Digitale & Tecnologia ===
+            "32024R1689",  # AI Act — Regolamento sull'Intelligenza Artificiale
+            "32022R2065",  # DSA — Digital Services Act
+            "32022R1925",  # DMA — Digital Markets Act
+            "32000L0031",  # Direttiva E-Commerce
+            "32019L0790",  # Direttiva Copyright (DSM)
+            "32019L0770",  # Direttiva Contenuti Digitali
+            # === Cybersecurity & Finanza ===
+            "32022L2555",  # NIS2 — Sicurezza Reti e Sistemi Informativi
+            "32022R2554",  # DORA — Digital Operational Resilience Act
+            "32023R1114",  # MiCA — Markets in Crypto-Assets
+            # === Consumatori & Commercio ===
+            "32011L0083",  # Direttiva Diritti dei Consumatori
+            "32019L2161",  # Direttiva Omnibus (pratiche commerciali sleali)
+            "32005L0029",  # Direttiva Pratiche Commerciali Sleali
+            # === Lavoro & Sociale ===
+            "32003L0088",  # Direttiva Orario di Lavoro
+            "32019L1152",  # Direttiva Condizioni di Lavoro Trasparenti
+            # === Ambiente ===
+            "32024L1760",  # CSDDD — Corporate Sustainability Due Diligence
+            "32020R0852",  # Tassonomia Verde EU
         ]
 
     def parse_document(self, celex_id: str):
@@ -149,9 +171,15 @@ class EurLexCrawler:
 
         print(f"[v] Cross-Embedding terminato! Ora il RAG conosce le leggi Europee.")
 
-if __name__ == "__main__":
+
+def run():
+    """Entry point per l'orchestratore."""
     crawler = EurLexCrawler()
-    # Testiamo solo lo scraping per ora senza intasare le API Gemini che stanno elaborando il Codice Civile
     crawler.execute_global_ingestion()
-    print("[!] Skip upload per test.")
-    # crawler.embed_and_upload()
+    crawler.embed_and_upload()
+    return len(crawler.documents)
+
+
+if __name__ == "__main__":
+    run()
+
