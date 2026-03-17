@@ -40,6 +40,8 @@ import LegalDisclaimer from "@/components/ui/LegalDisclaimer";
 import { Footer } from "@/components/ui/Footer";
 import GenerativeBackground from "@/components/ui/GenerativeBackground";
 import CookieConsent from "@/components/ui/CookieConsent";
+import { Suspense } from "react";
+import { PostHogProvider, PostHogPageview } from "@/components/providers/PostHogProvider";
 
 export default function RootLayout({
   children,
@@ -51,14 +53,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased min-h-screen flex flex-col bg-obsidian-950 text-slate-100 selection:bg-gold-500/30 overflow-x-hidden`}
       >
-        <GenerativeBackground />
-        <main className="flex-grow z-10 relative">
-          {children}
-        </main>
-        <Footer />
-        <LegalDisclaimer />
-        <DaemonDashboard />
-        <CookieConsent />
+        <Suspense fallback={null}>
+          <PostHogPageview />
+        </Suspense>
+        
+        <PostHogProvider>
+          <GenerativeBackground />
+          <main className="flex-grow z-10 relative">
+            {children}
+          </main>
+          <Footer />
+          <LegalDisclaimer />
+          <DaemonDashboard />
+          <CookieConsent />
+        </PostHogProvider>
       </body>
     </html>
   );
