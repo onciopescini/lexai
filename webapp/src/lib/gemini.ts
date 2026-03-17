@@ -33,7 +33,9 @@ export const getEmbeddings = async (text: string) => {
   }
 
   const model = getGenAI().getGenerativeModel({ model: "models/gemini-embedding-001" });
-  const result = await model.embedContent(text);
+
+  // @ts-expect-error - The Gemini API supports outputDimensionality even if types don't show it yet
+  const result = await model.embedContent({ content: { role: "user", parts: [{ text }] }, outputDimensionality: 768 });
   const embedding = result.embedding.values;
   
   // Store in cache
@@ -43,7 +45,7 @@ export const getEmbeddings = async (text: string) => {
   return embedding;
 };
 
-export const generateSynthesizedAnswer = async (query: string, context: string, history: {role: string, content: string}[] = []) => {
+export const generateSynthesizedAnswer = async (query: string, context: string, history: {role: string, content: string}[] = [], draftingMode: boolean = false, agentMemories: string = "") => {
   // Configurato sul modello ammiraglia più veloce.
   const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
   
@@ -52,10 +54,32 @@ export const generateSynthesizedAnswer = async (query: string, context: string, 
     ? history.map(msg => `${msg.role === 'user' ? 'UTENTE' : 'PICOCLAW'}: ${msg.content}`).join('\n\n')
     : "Nessuna conversazione precedente.";
 
-  const prompt = `
-  Sei PicoClaw, un infallibile assistente giuridico esperto di legge italiana ed europea.
+  const memoriesSection = agentMemories ? `\n\nMEMORIA A LUNGO TERMINE (Regole apprese dall'agente):\n${agentMemories}\nAttieniti rigidamente a queste regole e preferenze apprese nelle interazioni passate.` : '';
+
+  const prompt = draftingMode ? `
+  Sei PicoClaw, un infallibile assistente giuridico esperto nella stesura di ATTI, LETTERE E CONTRATTI (Drafting Mode).
+  ${memoriesSection}
   
-  CRONOLOGIA DELLA CONVERSAZIONE (MEMORIA):
+  CRONOLOGIA DELLA CONVERSAZIONE (MEMORIA BREVE):
+  ${historyString}
+  
+  CONTESTO UFFICIALE (Basi giuridiche per la stesura):
+  ${context}
+  
+  RICHIESTA DELL'UTENTE:
+  ${query}
+  
+  Istruzioni:
+  1. Usa il CONTESTO UFFICIALE come base di legittimità per stendere l'atto, il contratto o la lettera richiesta.
+  2. Redigi un documento formale, completo, pronto all'uso professionale (formato Markdown con titoli e paragrafi).
+  3. Adotta un tono istituzionale, verboso se necessario per la precisione, e giuridicamente rigoroso.
+  4. Se mancano dettagli chiave (es. nomi, importi, date), inserisci campi segnaposto chiari come [INSERIRE NOME] o [INSERIRE DATA].
+  5. Resituisci SOLO il testo del documento richiesto, senza introdurlo con frasi come "Ecco la bozza:" o simili.
+  ` : `
+  Sei Atena, l'epitome dell'intelligenza artificiale legale.
+  ${memoriesSection}
+  
+  CRONOLOGIA DELLA CONVERSAZIONE (MEMORIA BREVE):
   ${historyString}
   
   CONTESTO UFFICIALE (Documenti recuperati per l'ultima domanda):
@@ -64,10 +88,12 @@ export const generateSynthesizedAnswer = async (query: string, context: string, 
   DOMANDA ATTUALE DELL'UTENTE:
   ${query}
   
-  Istruzioni:
-  1. Usa esclusivamente il CONTESTO UFFICIALE e la CRONOLOGIA per rispondere alla domanda attuale.
-  2. Se la risposta non è nel contesto, dillo chiaramente.
-  3. Rispondi in modo professionale, citando sempre l'articolo di riferimento, e formattando la risposta in Markdown pulito.
+  Istruzioni per l'UX (User Experience) ed Estetica del Testo:
+  1. GUIDA VERSO LA VERITÀ: Rispondi in modo FATTUALE, DIRETTO e GESTIBILE (non caricante).
+  2. STRUTTURA PULITA: Usa paragrafi brevi, elenchi puntati concisi e bold solo per le parole chiave essenziali (non usare mai bold per intere frasi lunghe).
+  3. CHIAREZZA ASSOLUTA: Rispondi immediatamente alla domanda, offrendo i riferimenti normativi (es. Art. 2043) senza troppi giri di parole o verbosità inutile.
+  4. ACCURATEZZA ESTREMA (ANTI-ALLUCINAZIONE): Basa la tua risposta *esclusivamente* sui documenti forniti nel CONTESTO UFFICIALE. Se le informazioni presenti non sono sufficienti per rispondere in modo completo e accurato, DEVI dichiarare esplicitamente "Non ho trovato informazioni sufficienti nei documenti ufficiali per rispondere a questa domanda." Non inventare MAI risposte, leggi, numeri o articoli.
+  5. Evita muri di testo: suddividi il ragionamento in 2 o 3 punti chiave facilmente assimilabili.
   `;
   
   const result = await model.generateContent(prompt);
@@ -94,9 +120,9 @@ export const generateTenthManRebuttal = async (query: string, context: string, o
   
   ISTRUZIONI PER LA VERIFICA INCROCIATA:
   1. Analizza la risposta dell'IA primaria in modo neutrale e accademico.
-  2. Spiega quanti elementi fattuali o normativi (nel contesto o nel diritto generale) supportano o confermano la tesi primaria.
-  3. Evidenzia quanti e quali elementi (eccezioni, scappatoie, interpretazioni alternative, giurisprudenza contraria) NON la supportano o potrebbero metterne in discussione l'applicabilità assoluta.
-  4. Fornisci un quadro chiaro, bilanciato e rassicurante dei pro e dei contro legali, senza aggressività.
+  2. Cerca attivamente "allucinazioni" (affermazioni non supportate esplicitamente dal CONTESTO UFFICIALE). Se trovi affermazioni non verificate, denunciale apertamente.
+  3. Spiega quali elementi normativi supportano la tesi primaria e quali elementi (eccezioni, scappatoie, interpretazioni alternative) potrebbero metterne in discussione l'applicabilità assoluta.
+  4. Fornisci un quadro chiaro e bilanciato dei rischi legali associati alla tesi primaria.
   5. Usa formattazione Markdown per un'esposizione chiara.
   `;
   
@@ -111,7 +137,7 @@ export const generateLegalIllustration = async (topic: string) => {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=${GEMINI_API_KEY}`;
   
   // Create an optimized prompt for the Imagen model
-  const prompt = `Un'illustrazione istituzionale fotorealistica ad alta risoluzione, stile elegante e ministeriale, che rappresenta visivamente il seguente concetto legale: ${topic}. Nessun testo nell'immagine. Stile cinematografico.`;
+  const prompt = `Un'illustrazione concettuale astratta, fotorealistica ad alta risoluzione, puramente simbolica e senza ALCUNA parola o lettera scritta, che rappresenta visivamente il concetto: ${topic}. Stile fotografico contemporaneo e istituzionale.`;
   
   const payload = {
     instances: [{ prompt }],
@@ -241,3 +267,33 @@ export const factCheckResponse = async (
   }
 };
 
+// ============================================================================
+// SOCIAL ECHO PROTOCOL: Viral Summarization
+// ============================================================================
+
+export const generateSocialSummary = async (originalQuery: string, complexResponse: string) => {
+  const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
+  
+  const prompt = `
+  Sei Atena Social, l'anima divulgativa di LexAI. Il tuo scopo è tradurre "legalese" complesso in pillole iper-coinvolgenti per i social media (Instagram, TikTok, Twitter).
+  
+  L'UTENTE HA CHIESTO:
+  "${originalQuery}"
+  
+  LA TUA RISPOSTA TECNICA COMPLETA È STATA:
+  "${complexResponse}"
+  
+  ISTRUZIONI PER LA TRADUZIONE VIRALE:
+  Crea un output testuale brevissimo (massimo 100 parole in totale), formattato ESATTAMENTE con questa struttura:
+  
+  1. HOOK: Una frase d'apertura (massimo una riga) scioccante, urgente o super-relatable per catturare l'attenzione (con 1-2 emoji). Es. "Attenzione: pensi che il tuo padrone di casa possa fare questo? 🚨"
+  2. I FATTI (3 Bullet Points): Riduci il cuore della risposta in 3 punti elenco semplicissimi (livello terza media). Niente paroloni, dritto al sodo. Usa le spunte ✅ o le croci ❌.
+  3. L'AUTORITÀ: Una riga piccolissima in corsivo che cita la legge principale (es. "*Art. 1590 Codice Civile*") per dare autorità.
+  4. CALL TO ACTION: La frase finale esatta: "👉 Scopri come difenderti e analizza il tuo caso gratuito su lexai.it"
+  
+  NOTA BENE: Nessuna introduzione, nessuna conclusione. Solo l'HOOK, i 3 BULLET, l'AUTORITÀ e la CTA, separati da ritorni a capo puliti.
+  `;
+  
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+};

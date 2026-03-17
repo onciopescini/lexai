@@ -2,9 +2,9 @@ import { env } from 'process';
 
 /**
  * Funzione per eseguire ricerche Live Web tramite l'API di Perplexity.
- * Utilizza il modello sonar (online) per recuperare le ultime novità.
+ * Utilizza il modello sonar (online) per recuperare le ultime novità, ma ora opera come Fact-Checker (Data-Clash Protocol).
  */
-export async function searchPerplexity(query: string) {
+export async function searchPerplexity(query: string, baseThesis: string) {
   const apiKey = env.PERPLEXITY_API_KEY;
 
   if (!apiKey) {
@@ -20,12 +20,18 @@ export async function searchPerplexity(query: string) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "sonar", // Utilizza sempre il modello entry-level per ricerche web
+        model: "sonar", // Modello connesso al web
         messages: [
-          { role: "system", content: "Sei un assistente legale. Trova sentenze, leggi o notizie giuridiche molto recenti pertinenti alla domanda. Cita le fonti." },
-          { role: "user", content: query }
+          { 
+            role: "system", 
+            content: "Sei un revisore legale incaricato di Fact-Checking (Data-Clash Protocol). Cerca sul web le sentenze o le notizie legali più recenti possibili (specialmente della Corte di Cassazione Italiana) per CONTRADDIRE o CONFERMARE la Tesi Legale fornita. Se la tesi è inesatta o superata da una nuova sentenza, citala esplicitamente con i link." 
+          },
+          { 
+            role: "user", 
+            content: `DOMANDA ORIGINALE DELL'UTENTE: ${query}\n\nTESI LEGALE DA VERIFICARE SUL WEB:\n${baseThesis}` 
+          }
         ],
-        temperature: 0.2, // Bassa creatività, alta precisione per il diritto
+        temperature: 0.1, // Bassissima creatività, massima aderenza ai fatti web
         max_tokens: 1000
       })
     });

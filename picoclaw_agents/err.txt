@@ -1,1 +1,1 @@
-ERROR: {'message': 'new row violates row-level security policy for table "user_queries"', 'code': '42501', 'hint': None, 'details': None}
+{'message': 'expected 3072 dimensions, not 768', 'code': '22000', 'hint': None, 'details': None}

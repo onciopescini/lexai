@@ -22,6 +22,7 @@ class CivilCodeCrawler:
     """
     Crawler avanzato per il Codice Civile Italiano da Wikisource.
     Naviga dinamicamente nei vari Libri e Titoli per mantenere il contesto (Breadcrumbs).
+    Implementa un Chunker gerarchico ricorsivo per non sforare i limiti semantici di Embedding.
     """
     def __init__(self):
         self.base_domain = "https://it.wikisource.org"
@@ -73,7 +74,7 @@ class CivilCodeCrawler:
         # Pulizia edit note
         testo_raw = re.sub(r'\[.*?\]', '', testo_raw)
         
-        # Chunker V2
+        # Chunker V2 - Split ad articoli base
         chunks = []
         # Divisione basata sulla parola "Art." seguita da numero (es: Art. 1., Art. 2. , Art. 12-bis)
         # La regex tollera lettere come `bis`, `ter` comuni nel codice civile
@@ -85,20 +86,90 @@ class CivilCodeCrawler:
                 art_text = articles_raw[i+1].strip() if i+1 < len(articles_raw) else ""
                 
                 if len(art_text) > 20: # Evita articoli abrogati composti solo da "(abrogato)"
-                    chunks.append({
-                        "title": f"Codice Civile - Art. {art_num} ({page_title[:30]}...)",
-                        "content": f"Articolo {art_num}.\n{art_text}",
-                        "source_url": url,
-                        "metadata": {
-                            "source": "Codice Civile Italiano",
-                            "titolo_legge": "Codice Civile",
-                            "sezione": page_title,
-                            "tipo": "Articolo",
-                            "numero": art_num
-                        }
-                    })
+                    base_metadata = {
+                        "source": "Codice Civile Italiano",
+                        "titolo_legge": "Codice Civile",
+                        "sezione": page_title,
+                        "tipo": "Articolo",
+                        "numero": art_num
+                    }
+                    
+                    full_content = f"Articolo {art_num}.\n{art_text}"
+                    
+                    # Se il testo è troppo lungo, lo spezziamo in chunk semantici
+                    if len(full_content) > 800:
+                        split_texts = self._recursive_text_split(art_text, chunk_size=800, chunk_overlap=100)
+                        for idx, split_part in enumerate(split_texts):
+                            chunks.append({
+                                "title": f"Codice Civile - Art. {art_num} ({page_title[:30]}...) [Parte {idx+1}]",
+                                "content": f"Articolo {art_num}. [Continua]\n{split_part.strip()}",
+                                "source_url": url,
+                                "metadata": base_metadata
+                            })
+                    else:
+                        chunks.append({
+                            "title": f"Codice Civile - Art. {art_num} ({page_title[:30]}...)",
+                            "content": full_content,
+                            "source_url": url,
+                            "metadata": base_metadata
+                        })
                     
         return chunks
+
+    def _recursive_text_split(self, text, chunk_size=800, chunk_overlap=100) -> list:
+        """
+        Splitta il testo ricorsivamente in base a separatori via via più fini,
+        cercando di rispettare il limite di chunk_size con un chunk_overlap.
+        """
+        separators = ["\n\n", "\n", ". ", ", ", " "]
+        
+        # Helper interno ricorsivo
+        def split_text(txt, sep_index):
+            if len(txt) <= chunk_size or sep_index >= len(separators):
+                return [txt] if txt.strip() else []
+                
+            separator = separators[sep_index]
+            splits = txt.split(separator)
+            
+            final_chunks = []
+            current_chunk = ""
+            
+            for part in splits:
+                if not part.strip():
+                    continue
+                    
+                # Se è la prima aggiunta al chunk
+                if not current_chunk:
+                    current_chunk = part
+                # Se aggiungendo questa parte stiamo sotto il limite
+                elif len(current_chunk + separator + part) <= chunk_size:
+                    current_chunk += separator + part
+                # Se superiamo il limite e il current_chunk non è vuoto
+                else:
+                    final_chunks.append(current_chunk.strip())
+                    
+                    # Inizia un nuovo chunk considerando l'overlap
+                    # Prendiamo gli ultimi 'chunk_overlap' caratteri del pezzo precedente
+                    # ma cerchiamo di non troncare parole a metà se possibile (rozzo ma veloce)
+                    overlap_start = max(0, len(current_chunk) - chunk_overlap)
+                    prev_overlap = current_chunk[overlap_start:]
+                    current_chunk = prev_overlap + separator + part if prev_overlap else part
+            
+            if current_chunk:
+                final_chunks.append(current_chunk.strip())
+                
+            # Controllo di sicurezza: se qualche chunk è ancora troppo lungo, ri-split al livello successivo
+            validated_chunks = []
+            for c in final_chunks:
+                if len(c) > chunk_size and sep_index + 1 < len(separators):
+                    validated_chunks.extend(split_text(c, sep_index + 1))
+                else:
+                    validated_chunks.append(c)
+                    
+            return validated_chunks
+
+        return split_text(text, 0)
+
 
     def execute_global_ingestion(self, limit_pages=3): # limitato provvisorio per evitare ore di esecuzione ai primi test
         print("[*] Avvio PicoClaw Ingestion: CODICE CIVILE ITALIANO")
@@ -131,7 +202,8 @@ class CivilCodeCrawler:
                     headers = {'Content-Type': 'application/json'}
                     data = {
                         "model": "models/gemini-embedding-001",
-                        "content": {"parts": [{"text": doc['content']}]}
+                        "content": {"parts": [{"text": doc['content']}]},
+                        "outputDimensionality": 768
                     }
                     res = requests.post(GEMINI_API_URL, headers=headers, json=data)
                     if res.status_code == 200:
@@ -154,9 +226,63 @@ class CivilCodeCrawler:
 
         print(f"[v] Lavoro terminato con successo! Il RAG ha imparato il Codice Civile.")
 
+    def upload_historical_articles(self, batch_size=50):
+        if not self.documents:
+            print("[!] Nessun documento da backuppare per storico.")
+            return
+
+        print(f"[*] Inizio Upload su Supabase (legal_historical_articles). Totale: {len(self.documents)}")
+        
+        for i in range(0, len(self.documents), batch_size):
+            batch = self.documents[i:i + batch_size]
+            payload_db = []
+            
+            for doc in batch:
+                is_demo = "2086" in str(doc["metadata"].get("numero"))
+                
+                payload_db.append({
+                    "codice": doc["metadata"]["titolo_legge"],
+                    "libro": "Libro V - Del Lavoro" if is_demo else None, 
+                    "titolo": doc["metadata"]["sezione"].replace('_', ' '),
+                    "capo": None,
+                    "articolo_num": doc["metadata"]["numero"],
+                    "articolo_titolo": None,
+                    "testo": doc["content"].replace(f"Articolo {doc['metadata'].get('numero')}.\n", "").strip(),
+                    "versione_nome": "Aggiornato (D.Lgs. 14/2019)" if is_demo else "Testo Vigente",
+                    "data_entrata_in_vigore": "2019-03-16" if is_demo else "1942-04-19",
+                    "data_abrogazione": None,
+                    "is_vigente": True
+                })
+                
+                if is_demo:
+                    # Demo version for diff viewing
+                    payload_db.append({
+                        "codice": doc["metadata"]["titolo_legge"],
+                        "libro": "Libro V - Del Lavoro", 
+                        "titolo": doc["metadata"]["sezione"].replace('_', ' '),
+                        "capo": None,
+                        "articolo_num": doc["metadata"]["numero"],
+                        "articolo_titolo": None,
+                        "testo": "L'imprenditore è il capo dell'impresa e da lui dipendono gerarchicamente i suoi collaboratori.", 
+                        "versione_nome": "Testo Originale (Codice Civile 1942)",
+                        "data_entrata_in_vigore": "1942-04-19",
+                        "data_abrogazione": "2019-03-15",
+                        "is_vigente": False
+                    })
+
+            if payload_db:
+                print(f"[*] Pusho a DB batch storico di {len(payload_db)} articoli...")
+                try:
+                    supabase.table('legal_historical_articles').insert(payload_db).execute()
+                except Exception as e:
+                    print(f"[X] Eccezione Storico: {e}")
+
+        print(f"[v] Upload storico completato!")
+
 if __name__ == "__main__":
     crawler = CivilCodeCrawler()
     # ATTENZIONE: Limitato a 3 pagine indice per testing rapido.
     # Togliere 'limit_pages' per scaricare l'INTERO codice civile da 3000 articoli.
-    crawler.execute_global_ingestion(limit_pages=9999)
-    crawler.embed_and_upload()
+    crawler.execute_global_ingestion(limit_pages=9999) # Ripristinato il limite per scaricare l'intero codice
+    crawler.embed_and_upload() # Upload RAG 768d ricostruito
+    crawler.upload_historical_articles()

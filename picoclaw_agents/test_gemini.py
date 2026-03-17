@@ -1,28 +1,21 @@
 import os
+import requests
 from dotenv import load_dotenv
-import google.generativeai as genai
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={GEMINI_API_KEY}"
+headers = {'Content-Type': 'application/json'}
+data = {
+    "model": "models/gemini-embedding-001",
+    "content": {"parts": [{"text": "Hello world"}]},
+    "outputDimensionality": 768
+}
 
-genai.configure(api_key=GEMINI_API_KEY)
-try:
-    model = genai.GenerativeModel('gemini-1.5-pro-latest')
-    res = model.generate_content("hello")
-    print("PRO LATEST WORKS:", res.text)
-except Exception as e:
-    print("PRO LATEST ERROR:", repr(e))
-
-try:
-    model = genai.GenerativeModel('gemini-1.5-pro')
-    res = model.generate_content("hello")
-    print("PRO WORKS:", res.text)
-except Exception as e:
-    print("PRO ERROR:", repr(e))
-
-try:
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    res = model.generate_content("hello")
-    print("FLASH WORKS:", res.text)
-except Exception as e:
-    print("FLASH ERROR:", repr(e))
+res = requests.post(url, headers=headers, json=data)
+print(f"Status: {res.status_code}")
+if res.status_code == 200:
+    vec = res.json()['embedding']['values']
+    print(f"Length of response vector: {len(vec)}")
+else:
+    print(res.text)

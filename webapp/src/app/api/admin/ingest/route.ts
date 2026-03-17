@@ -107,8 +107,8 @@ export async function POST(req: Request) {
         extractedData: textualDescription
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Ingest] Errore:', error);
-    return NextResponse.json({ error: error.message || 'Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

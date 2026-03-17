@@ -1,0 +1,29 @@
+# Core Framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-dotenv==1.0.1
+pydantic==2.10.4
+requests==2.32.3
+
+# LangChain & LangGraph
+langchain-core==0.3.28
+langchain-google-genai==2.0.8
+langgraph==0.2.60
+
+# Vector Database
+pinecone-client==5.0.1
+
+# Supabase
+supabase==2.11.0
+
+# Document Generation
+fpdf2==2.8.2
+markdown==3.7.1
+
+# Email
+resend==2.7.0
+
+# Google Workspace
+google-api-python-client==2.159.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.1

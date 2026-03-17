@@ -69,8 +69,8 @@ export default function AdminIngestionPage() {
       setTitle('');
       if (fileInputRef.current) fileInputRef.current.value = '';
 
-    } catch (err: any) {
-      setStatus({ type: 'error', message: err.message });
+    } catch (err: unknown) {
+      setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
     } finally {
       setIsUploading(false);
     }

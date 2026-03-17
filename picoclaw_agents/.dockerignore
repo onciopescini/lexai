@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environment & Secrets
+.env
+.env.*
+token.json
+credentials.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs & Output
+*.log
+*.txt
+error.log
+out.txt
+out2.txt
+out3.txt
+err.txt
+err_clean.txt
+db_err.txt
+mem_out.txt
+atena_social_out.txt
+lesson_utf8.txt
+
+# Data files
+*.html
+*.json
+!package.json
+!package-lock.json
+
+# Harvester outputs (not needed in container)
+harvesters/
+supabase/
+
+# Migration scripts (one-time use)
+setup_*.py
+setup_*.sql
+optimize_*.sql
+alter_*.py
+fix_*.py
+check_*.py
+debug_*.py
+dump_*.py
+get_*.py
+ingest_*.py
+list_*.py
+fetch_*.py
+
+# Node modules (if any)
+node_modules/

@@ -10,7 +10,7 @@ interface LiveEvent {
   level: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS' | 'SYNC';
   agent_name: string;
   message: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export default function DaemonDashboard() {

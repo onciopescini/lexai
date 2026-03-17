@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "C:\Users\alfon\OneDrive\Desktop\LEXAI\picoclaw_agents\test_run.py", line 5, in <module>
+    import atena_langgraph_core
+  File "C:\Users\alfon\OneDrive\Desktop\LEXAI\picoclaw_agents\atena_langgraph_core.py", line 97, in <module>
+    atena_agent = create_react_agent(
+                  ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\alfon\AppData\Local\Programs\Python\Python312\Lib\site-packages\typing_extensions.py", line 3004, in wrapper
+    return arg(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\alfon\AppData\Local\Programs\Python\Python312\Lib\site-packages\langgraph\prebuilt\chat_agent_executor.py", line 529, in create_react_agent
+    raise TypeError(
+TypeError: create_react_agent() got unexpected keyword arguments: {'messages_modifier': "\nSei Atena, l'Intelligenza Artificiale Legale Suprema.\nIl tuo compito è aiutare l'utente fornendo risposte precise e verificabili.\nSe hai bisogno di cercare novità legali, usa `search_guardian_alerts`.\nSe formuli una tesi legale, passa il concetto a `legal_fact_checker` per validarlo.\n\nRispondi in modo regale, autorevole e con precisione chirurgica.\n"}

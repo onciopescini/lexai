@@ -1,12 +1,9 @@
-from supabase import create_client
 import os
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
 load_dotenv()
+supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
-try:
-    supabase = create_client(os.getenv('SUPABASE_URL'), os.getenv('SUPABASE_KEY'))
-    res = supabase.table('user_queries').insert([{'query': 'Che succede se mi licenziano senza giusta causa?'}]).execute()
-    print("SUCCESS:", res)
-except Exception as e:
-    print("ERROR:", str(e))
+res = supabase.table('legal_documents').select('*', count='exact').limit(1).execute()
+print(f"Row count: {res.count}")

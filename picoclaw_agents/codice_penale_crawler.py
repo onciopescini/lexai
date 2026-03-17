@@ -166,14 +166,72 @@ class PenalCodeCrawler:
                 uploaded += len(payload_db)
 
         print(f"[CP] ✅ Completato! {uploaded} articoli del Codice Penale caricati.")
+        print(f"[CP] ✅ Completato! {uploaded} articoli del Codice Penale caricati.")
         return uploaded
+
+    def upload_historical_articles(self, batch_size=50):
+        if not self.documents:
+            print("[CP][!] Nessun documento da backuppare per storico.")
+            return
+
+        print(f"[CP][*] Inizio Upload su Supabase (legal_historical_articles). Totale: {len(self.documents)}")
+        
+        for i in range(0, len(self.documents), batch_size):
+            batch = self.documents[i:i + batch_size]
+            payload_db = []
+            
+            for doc in batch:
+                is_demo = "624" in str(doc["metadata"].get("numero"))
+                testo_clean = doc["content"]
+                if doc["metadata"].get("tipo") == "Articolo":
+                    testo_clean = doc["content"].replace(f"Articolo {doc['metadata'].get('numero')}.\n", "").strip()
+
+                payload_db.append({
+                    "codice": doc["metadata"]["titolo_legge"],
+                    "libro": None,
+                    "titolo": doc["metadata"]["sezione"].replace('_', ' '),
+                    "capo": None,
+                    "articolo_num": doc["metadata"].get("numero", "N/A"),
+                    "articolo_titolo": None,
+                    "testo": testo_clean,
+                    "versione_nome": "Testo Vigente",
+                    "data_entrata_in_vigore": "1930-10-19",
+                    "data_abrogazione": None,
+                    "is_vigente": True
+                })
+                
+                if is_demo:
+                    # Demo version for diff viewing
+                    payload_db.append({
+                        "codice": doc["metadata"]["titolo_legge"],
+                        "libro": None,
+                        "titolo": doc["metadata"]["sezione"].replace('_', ' '),
+                        "capo": None,
+                        "articolo_num": doc["metadata"].get("numero"),
+                        "articolo_titolo": None,
+                        "testo": "Chiunque s'impossessa della cosa mobile altrui, sottraendola a chi la detiene, al fine di trarne profitto per sé o per altri, è punito con la reclusione da tre a sei anni e con la multa da euro 154 a euro 516.", 
+                        "versione_nome": "Testo Originale (Codici Rocco 1930)",
+                        "data_entrata_in_vigore": "1930-10-19",
+                        "data_abrogazione": "1999-12-30",
+                        "is_vigente": False
+                    })
+
+            if payload_db:
+                print(f"[CP][*] Pusho a DB batch storico di {len(payload_db)} articoli...")
+                try:
+                    supabase.table('legal_historical_articles').insert(payload_db).execute()
+                except Exception as e:
+                    print(f"[CP][X] Eccezione Storico: {e}")
+
+        print(f"[CP][v] Upload storico completato!")
 
 
 def run():
     """Entry point per l'orchestratore."""
     crawler = PenalCodeCrawler()
-    crawler.execute_ingestion(limit_pages=9999)
-    crawler.embed_and_upload()
+    crawler.execute_ingestion(limit_pages=9999) # Ripristinato il limite per scaricare l'intero codice
+    # crawler.embed_and_upload()
+    crawler.upload_historical_articles()
     return len(crawler.documents)
 
 

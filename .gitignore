@@ -26,3 +26,18 @@ build/
 picoclaw_agents/hotfolder/ 
 picoclaw_agents/processed/ 
 picoclaw_agents/live_event_logs/
+
+# Test files with API keys
+webapp/test-*.js
+webapp/test-*.ts
+test-*.js
+test-*.ts
+
+# Google OAuth credentials
+credentials.json
+token.json
+
+# Supabase
+supabase/.temp/
+webapp/supabase/.temp/
+

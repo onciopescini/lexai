@@ -1,15 +1,12 @@
 import os
+import requests
 from dotenv import load_dotenv
-import google.generativeai as genai
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
-
-models = []
-for m in genai.list_models():
-    if 'generateContent' in m.supported_generation_methods:
-        models.append(m.name)
-
-with open('models.txt', 'w', encoding='utf-8') as f:
-    f.write("\n".join(models))
+url = f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_API_KEY}"
+res = requests.get(url)
+models = res.json().get('models', [])
+for model in models:
+    if 'embed' in model['name']:
+        print(model['name'])

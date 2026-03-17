@@ -2,20 +2,51 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getEmbeddings, generateSynthesizedAnswer, generateTenthManRebuttal, generateLegalIllustration, factCheckResponse } from '@/lib/gemini';
 import { searchPerplexity } from '@/lib/perplexity';
-import { rerankDocuments } from '@/lib/groq';
+import { rerankDocuments, analyzeIntent } from '@/lib/groq';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Consenti fino a 60 secondi per l'esecuzione del pipeline RAG complesso su Vercel
+
+// Semplice Rate Limiter in-memory (per istanza serverless) per prevenire abusi base
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minuto
+const MAX_REQUESTS_PER_WINDOW = 10;
+const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  
+  record.count += 1;
+  return true;
+}
 
 export async function POST(req: Request) {
   try {
-    const { query, sourceFilter, history } = await req.json();
+    // Estrazione IP per Rate Limiting
+    const forwardedFor = req.headers.get('x-forwarded-for');
+    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'anonymous';
+    
+    if (!checkRateLimit(ip)) {
+      console.warn(`[RATE LIMIT] Richiesta bloccata per l'IP: ${ip}`);
+      return NextResponse.json({ error: 'Troppe richieste. Riprova tra un minuto.' }, { status: 429 });
+    }
+
+    const { query, sourceFilter, history, draftingMode } = await req.json();
 
     if (!query) {
       return NextResponse.json({ error: 'Nessuna query fornita' }, { status: 400 });
     }
 
     // --- PHASE 7: Log della query utente per il Trend Analyzer (Citizen Guardian) ---
-    // Fire-and-forget: non blocchiamo il pipeline per il log
     supabase
       .from('user_queries')
       .insert([{ query: query }])
@@ -25,25 +56,53 @@ export async function POST(req: Request) {
 
     console.log(`[*] Ricerca Semantica per: "${query}" (Filtro: ${sourceFilter || 'Nessuno'})`);
 
-    const embedding = await getEmbeddings(query);
+    // --- PHASE 14: Agentic RAG Router ---
+    console.log(`[*] Esecuzione Agentic Router per classificazione intento...`);
+    const { intent, confidence } = await analyzeIntent(query);
+    console.log(`[*] Intento Rilevato: ${intent.toUpperCase()} (Sicurezza: ${Math.round(confidence * 100)}%)`);
 
-    // 2. Cercare nel DB Supabase (pgvector) in parallelo alla Ricerca Web (Perplexity)
-    let filterCondition = {};
-    if (sourceFilter === 'Costituzione') {
-        filterCondition = { 'source': 'Costituzione Italiana' };
-    } else if (sourceFilter === 'Codice Civile') {
-        filterCondition = { 'source': 'Codice Civile Italiano' };
+    if (intent === 'general_chat') {
+      return NextResponse.json({ 
+        response: `Ciao! Sono Atena, il tuo assistente legale AI. Posso aiutarti a ricercare leggi nel database ufficiale, redigere contratti, o analizzare casi giuridici. Come posso esserti utile oggi?`,
+        sources: [] 
+      });
     }
 
-    console.log(`[*] Avvio ricerca parallela (Supabase Vector + Perplexity Web Agent)...`);
-    const [supabaseResult, perplexityResult] = await Promise.all([
-      supabase.rpc('match_legal_documents', {
+    if (intent === 'history') {
+      return NextResponse.json({ 
+        response: `Hai chiesto informazioni storiche o confronti tra vecchie versioni di una legge. Ti invito a utilizzare lo strumento avanzato "Libreria e Storico" che ti permette di visualizzare il "Diff" esatto (le parole aggiunte o rimosse) tra le varie edizioni storiche del codice. Dimmi se vuoi che cerchi comunque il testo attualmente in vigore.`,
+        sources: [] 
+      });
+    }
+
+    const effectiveDraftingMode = draftingMode || intent === 'drafting';
+    if (effectiveDraftingMode) {
+      console.log(`[*] Modalità Drafting (Redazione) attivata dal Router o dall'Utente.`);
+    }
+
+    const embedding = await getEmbeddings(query);
+
+    let filterCondition = {};
+    if (sourceFilter && sourceFilter !== 'Tutte le Fonti') {
+        filterCondition = { 'source': sourceFilter };
+    }
+
+    // 1. Cercare prima solo nel database e agent memories
+    console.log(`[*] Avvio ricerca database (Supabase Hybrid + Agent Memories)...`);
+    const [supabaseResult, memoryResult] = await Promise.all([
+      supabase.rpc('hybrid_search_legal_docs', {
         query_embedding: embedding,
-        match_threshold: 0.1, 
+        query_text: query,
+        filter: filterCondition,
         match_count: 5,
-        filter: filterCondition
+        full_text_weight: 1.0,
+        semantic_weight: 1.0
       }),
-      searchPerplexity(query)
+      supabase.rpc('match_agent_memories', {
+        query_embedding: embedding,
+        match_threshold: 0.3,
+        match_count: 3
+      })
     ]);
 
     const { data: documents, error } = supabaseResult;
@@ -57,53 +116,92 @@ export async function POST(req: Request) {
       return NextResponse.json({ response: 'Non ho trovato nessuna corrispondenza legale ufficiale nel database.', sources: [] });
     }
 
-    // 2.5. Semantic Reranking via Groq (ported from GravityClaw)
-    // Reorders documents by actual relevance to the query, not just vector similarity
+    // 2. Semantic Reranking via Groq
     let rankedDocs = documents;
     try {
       rankedDocs = await rerankDocuments(query, documents);
       console.log('[*] Groq reranking completato.');
-    } catch (_e) {
+    } catch {
       console.log('[*] Reranking skipped (Groq unavailable), using vector similarity order.');
     }
 
-    // 3. Unire il testo dei documenti recuperati (Atena Verified) e la Live Web Search (Perplexity)
     let contextText = rankedDocs.map(
       (doc: {title: string; source_url: string; content: string}) => `FONTE UFFICIALE DB: ${doc.title} \nURL: ${doc.source_url}\nTESTO:\n${doc.content}\n---`
     ).join('\n');
 
-    if (perplexityResult) {
-      contextText += `\n\n=== AGGIORNAMENTI WEB IN TEMPO REALE (Perplexity Sonar API) ===\n${perplexityResult}\n===\n\nISTRUZIONE: Usa SIA il database ufficiale SIA le notizie/sentenze web in tempo reale per formulare la risposta più aggionata. Specifica sempre quando una cosa è legge codificata o quando è una sentenza/news web recente.`;
+    let agentMemoriesText = "";
+    if (memoryResult && memoryResult.data && memoryResult.data.length > 0) {
+      agentMemoriesText = memoryResult.data.map((m: { memory_text: string }) => `- ${m.memory_text}`).join('\n');
     }
 
-    // 4. Passare Storico + Contesto Hibrido + Domanda al LLM Generativo (Gemini)
-    console.log('[*] Generazione Sintesi AI con memoria storica e contesto ibrido...');
+    // 3. Generare la Base Thesis (Primary AI) usando SOLO fonti interne
+    console.log('[*] Generazione Tesi Base AI (Internal Knowledge Only)...');
     const conversationHistory = history || [];
-    const aiAnswer = await generateSynthesizedAnswer(query, contextText, conversationHistory);
+    const baseThesis = await generateSynthesizedAnswer(query, contextText, conversationHistory, effectiveDraftingMode, agentMemoriesText);
 
-    // 5. Fase 10/13: Protocollo Decimo Uomo, Generazione Immagine e Fact-Check (Eseguiti in Parallelo per non bloccare)
-    console.log('[*] Attivazione Protocollo Decimo Uomo, Generazione Illustrazione (Imagen 4) e Fact-Check Engine...');
-    
+    // 4. DATA-CLASH PROTOCOL (Se non siamo in drafting)
+    let perplexityValidation = null;
+    let tenthManAnswer = "*(Il Protocollo Decimo Uomo è disattivato in modalità Drafting. Rivedere attentamente prima dell'uso).*";
+    let factCheckReport = null;
+
+    console.log('[*] Avvio Operazioni Parallele (Data-Clash, Imagen 4, Fact-Check Engine)...');
     const imageTopicPrompt = `Concetto legale da illustrare: "${query}"`;
     
-    const [tenthManAnswer, legalIllustration, factCheckReport] = await Promise.all([
-      generateTenthManRebuttal(query, contextText, aiAnswer),
-      generateLegalIllustration(imageTopicPrompt),
-      factCheckResponse(query, aiAnswer, contextText)
-    ]);
+    // Generiamo l'immagine in parallelo a prescindere dal routing
+    const legalIllustrationPromise = generateLegalIllustration(imageTopicPrompt);
 
-    // 6. Ritornare all'interfaccia UI utente la risposta primaria, il decimo uomo, le fonti citate, news web live, l'immagine e il fact-check
+    if (!effectiveDraftingMode) {
+      // 4a. Perplexity esegue l'adversarial web check contro la tesi base
+      console.log('[*] Esecuzione Perplexity Data-Clash contro la Tesi Base...');
+      perplexityValidation = await searchPerplexity(query, baseThesis);
+      
+      const tenthManContext = `CONTESTO UFFICIALE DB:\n${contextText}\n\n=== CONTRO-ANALISI WEB (PERPLEXITY DATA-CLASH) ===\n${perplexityValidation || "Nessun aggiornamento web."}`;
+      
+      // 4b. Il Decimo Uomo valuta sia il DB sia l'attacco di Perplexity
+      console.log('[*] Esecuzione Protocollo Decimo Uomo...');
+      [tenthManAnswer, factCheckReport] = await Promise.all([
+        generateTenthManRebuttal(query, tenthManContext, baseThesis),
+        factCheckResponse(query, baseThesis, contextText)
+      ]);
+    } else {
+      // Drafting mode
+      factCheckReport = { classification: "verified", justification: "Modalità Drafting (Stesura) attiva dal router. Modulo Fact-Check automatizzato bypassato." };
+    }
+
+    const legalIllustration = await legalIllustrationPromise;
+
+    // Salvataggio della sessione in DB
+    supabase.from('chat_sessions').insert([{ 
+      session_id: 'default_user', 
+      user_query: query, 
+      ai_response: baseThesis 
+    }]).then(({ error: sessionError }) => {
+      if (sessionError) console.error("Errore salvataggio sessione di chat:", sessionError);
+    });
+
+    supabase.from('atena_truth_telemetry').insert([{
+      session_id: 'default_user',
+      query_text: query,
+      tenth_man_triggered: !effectiveDraftingMode,
+      primary_ai_model: 'gemini-2.5-flash',
+      sources_count: rankedDocs ? rankedDocs.length : 0
+    }]).then(({ error: telemetryError }) => {
+      if (telemetryError) console.error("Errore salvataggio Telemetria della Verità:", telemetryError);
+    });
+
+    // 5. Ritornare all'interfaccia UI utente
     return NextResponse.json({
-      response: aiAnswer,
+      response: baseThesis,
       contra_analysis: tenthManAnswer,
       sources: rankedDocs,
-      web_updates: perplexityResult,
+      web_updates: perplexityValidation,
       legal_illustration: legalIllustration,
       fact_check: factCheckReport
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message, stack: error.stack }, { status: 500 });
+    const errMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'Internal Server Error', details: errMessage }, { status: 500 });
   }
 }

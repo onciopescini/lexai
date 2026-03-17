@@ -1,0 +1,1 @@
+{'message': 'new row violates row-level security policy for table "legal_documents"', 'code': '42501', 'hint': None, 'details': None}
