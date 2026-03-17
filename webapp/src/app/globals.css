@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+@theme {
+  --color-obsidian-950: #050B14;
+  --color-obsidian-900: #0A1424;
+  --color-obsidian-800: #12213A;
+  --color-obsidian-700: #1C3050;
+
+  --color-gold-300: #F3E08F;
+  --color-gold-400: #E6C65A;
+  --color-gold-500: #D4AF37;
+  --color-gold-600: #B28F2A;
+  --color-gold-700: #8A6E1D;
+
+  --color-divine-light: #F7E9C8;
+
+  --font-playfair: var(--font-playfair), "Georgia", serif;
+}
+
 @layer utilities {
   .animate-blob {
     animation: blob 10s infinite;

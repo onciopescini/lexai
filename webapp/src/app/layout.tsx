@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,14 +12,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
 export const metadata: Metadata = {
-  title: "Atena — AI Legal Intelligence per il Diritto Italiano",
-  description: "Atena - Piattaforma Sperimentale di Analisi Giuridica tramite IA. Motore di ricerca documentale per il Diritto Italiano.",
-  keywords: "Atena, diritto italiano, ricerca legale, intelligenza artificiale, codice civile, costituzione italiana, AI legale, ricerca semantica",
+  title: "Atena — La Dea Moderna della Legge",
+  description: "Atena - Assistente Avanzato per la Ricerca Giuridica e l'Analisi Normativa.",
+  keywords: "Atena, diritto italiano, ricerca legale, intelligenza artificiale, AI legale, ricerca semantica",
   authors: [{ name: "Atena Team" }],
   openGraph: {
-    title: "Atena — AI Legal Intelligence",
-    description: "Atena - Piattaforma Sperimentale di Analisi Giuridica tramite IA. Motore di ricerca documentale per il Diritto Italiano.",
+    title: "Atena — La Dea Moderna della Legge",
+    description: "Atena - Assistente Avanzato per la Ricerca Giuridica e l'Analisi Normativa.",
     type: "website",
     locale: "it_IT",
   },
@@ -40,12 +46,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it">
+    <html lang="it" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased min-h-screen flex flex-col bg-obsidian-950 text-slate-100 selection:bg-gold-500/30 overflow-x-hidden`}
       >
         <GenerativeBackground />
-        <main className="flex-grow">
+        <main className="flex-grow z-10 relative">
           {children}
         </main>
         <Footer />
@@ -55,3 +61,4 @@ export default function RootLayout({
     </html>
   );
 }
+
