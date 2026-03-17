@@ -14,17 +14,27 @@ function getStripe() {
 }
 
 export async function POST(req: Request) {
-  const stripe = getStripe();
-
   try {
-    const { email } = await req.json();
-
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
-        { error: 'Stripe non è configurato su questo server. Aggiungi STRIPE_SECRET_KEY in .env.local' },
-        { status: 500 }
+        { error: 'Stripe non è configurato su questo server.' },
+        { status: 503 }
       );
     }
+
+    const body = await req.json().catch(() => null);
+    if (!body || !body.email) {
+      return NextResponse.json(
+        { error: 'Email è obbligatoria per il checkout.' },
+        { status: 400 }
+      );
+    }
+
+    const { email } = body;
+    const stripe = getStripe();
+
+    // Use origin header with fallback to production domain
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || 'https://atena-lex.it';
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -36,8 +46,8 @@ export async function POST(req: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/?checkout=success`,
-      cancel_url: `${req.headers.get('origin')}/?checkout=cancel`,
+      success_url: `${origin}/?checkout=success`,
+      cancel_url: `${origin}/?checkout=cancel`,
     });
 
     return NextResponse.json({ url: session.url });
