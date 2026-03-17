@@ -123,10 +123,9 @@ export default function SocialCard({ content, sourceTitle, onClose }: SocialCard
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "url('/images/atena-pattern-bg.png')", backgroundSize: "150px" }}></div>
 
-                {/* Header */}
                 <div className="flex items-center gap-3 mb-8 z-10 shrink-0">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <Image src="/images/atena-text-logo.png" alt="Atena" width={30} height={10} className="brightness-0 invert object-contain" />
+                    <Image src="/atena-lex-text.png" alt="Atena" width={30} height={10} className="mix-blend-screen object-contain" />
                   </div>
                   <div>
                     <h1 className="text-lg font-black text-slate-900 leading-none">Atena.</h1>

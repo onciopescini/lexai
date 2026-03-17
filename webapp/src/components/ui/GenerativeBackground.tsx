@@ -1,16 +1,28 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
 export default function GenerativeBackground() {
   return (
-    <div className="fixed inset-0 z-[-1] overflow-hidden bg-[#f8f9fc] pointer-events-none">
+    <div className="fixed inset-0 z-[-1] overflow-hidden bg-obsidian-950 pointer-events-none">
+      {/* 4K Generated Background Image */}
+      <div className="absolute inset-0 z-0 opacity-40">
+        <Image 
+          src="/atena-bg-ai.png" 
+          alt="Atena Dashboard Background" 
+          fill
+          className="object-cover mix-blend-screen"
+          priority
+        />
+      </div>
+
       {/* 
         SVG Noise Overlay for Premium Texture 
-        Creates a subtle grainy film-like effect common in 2026 UI trends.
+        Creates a subtle grainy film-like effect.
       */}
       <svg
-        className="absolute inset-0 w-full h-full opacity-[0.03] mix-blend-overlay z-10"
+        className="absolute inset-0 w-full h-full opacity-[0.02] mix-blend-overlay z-10"
         xmlns="http://www.w3.org/2000/svg"
       >
         <filter id="noiseFilter">
@@ -33,7 +45,10 @@ export default function GenerativeBackground() {
         Subtle Grid Overlay
         Gives a slight technical / blueprint feel underneath the glassmorphism.
       */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] z-0"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] z-10"></div>
+      
+      {/* Dark Vignette to keep text readable */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(5,11,20,0.8)_100%)] z-20"></div>
     </div>
   );
 }

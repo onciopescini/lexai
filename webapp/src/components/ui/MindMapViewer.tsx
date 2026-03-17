@@ -20,7 +20,6 @@ import dagre from 'dagre';
 interface MindMapProps {
   initialNodes: Record<string, unknown>[];
   initialEdges: Record<string, unknown>[];
-  onClose: () => void;
 }
 
 // Dagre configuration for auto-layouting
@@ -62,14 +61,13 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   return { nodes, edges };
 };
 
-// Custom Node to make them look "glassmorphic" and premium
-const CustomNode = ({ data }: { data: Record<string, unknown> | any }) => {
+const CustomNode = ({ data }: { data: { type?: string; label?: string; description?: string } }) => {
   const bgColor = 
-    data.type === 'law' ? 'from-blue-500/10 to-blue-600/5 border-blue-200' :
-    data.type === 'fact' ? 'from-emerald-500/10 to-emerald-600/5 border-emerald-200' :
-    data.type === 'conclusion' ? 'from-purple-500/10 to-purple-600/5 border-purple-200' :
-    data.type === 'exception' ? 'from-amber-500/10 to-amber-600/5 border-amber-200' :
-    'from-slate-500/10 to-slate-600/5 border-slate-200';
+    data.type === 'law' ? 'from-gold-500/10 to-gold-600/5 border-gold-500/30' :
+    data.type === 'fact' ? 'from-emerald-500/10 to-emerald-600/5 border-emerald-500/30' :
+    data.type === 'conclusion' ? 'from-purple-500/10 to-purple-600/5 border-purple-500/30' :
+    data.type === 'exception' ? 'from-amber-500/10 to-amber-600/5 border-amber-500/30' :
+    'from-slate-500/10 to-slate-600/5 border-slate-500/30';
 
   const icon = 
     data.type === 'law' ? '⚖️' :
@@ -78,29 +76,29 @@ const CustomNode = ({ data }: { data: Record<string, unknown> | any }) => {
     data.type === 'exception' ? '⚠️' : '💡';
 
   return (
-    <div className={`px-4 py-3 rounded-2xl bg-white/80 backdrop-blur-md border shadow-lg bg-gradient-to-br ${bgColor} min-w-[200px] max-w-[280px]`}>
-      <Handle type="target" position={Position.Top} className="w-3 h-3 border-2 border-white bg-slate-400" />
+    <div className={`px-4 py-3 rounded-2xl bg-obsidian-900/80 backdrop-blur-md border shadow-lg bg-gradient-to-br ${bgColor} min-w-[200px] max-w-[280px]`}>
+      <Handle type="target" position={Position.Top} className="w-3 h-3 border-2 border-obsidian-950 bg-gold-500" />
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2 mb-1">
            <span className="text-lg">{icon}</span>
-           <h3 className="text-sm font-bold text-slate-800 leading-tight">{data.label}</h3>
+           <h3 className="text-sm font-bold text-slate-200 leading-tight">{data.label}</h3>
         </div>
         {data.description && (
-          <p className="text-[10px] text-slate-500 leading-snug font-medium line-clamp-3">
+          <p className="text-[10px] text-slate-400 leading-snug font-medium line-clamp-3">
             {data.description}
           </p>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 border-2 border-white bg-slate-400" />
+      <Handle type="source" position={Position.Bottom} className="w-3 h-3 border-2 border-obsidian-950 bg-gold-500" />
     </div>
   );
 };
 
-export default function MindMapViewer({ initialNodes, initialEdges, onClose }: MindMapProps) {
+export default function MindMapViewer({ initialNodes, initialEdges }: MindMapProps) {
   const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
 
   // Map initial nodes to the React Flow format injecting our 'custom' type
-  const formattedNodes = initialNodes.map((n: any) => ({
+  const formattedNodes = initialNodes.map((n: Record<string, any>) => ({
     id: n.id,
     type: 'custom',
     position: { x: 0, y: 0 },
@@ -130,65 +128,37 @@ export default function MindMapViewer({ initialNodes, initialEdges, onClose }: M
   const [edges, , onEdgesChange] = useEdgesState(layoutedEdges);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 animate-fade-in-up">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full h-full max-w-6xl max-h-[90vh] glass-panel rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-white/20">
-        
-        {/* Header */}
-        <div className="w-full flex justify-between items-center p-6 border-b border-black/5 bg-white/50 backdrop-blur-xl z-10 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Mappa Mentale (End-of-Session)</h2>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Atena Cognitive Synthesis</p>
-            </div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="p-2.5 rounded-full hover:bg-black/5 text-slate-400 hover:text-slate-700 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* React Flow Canvas */}
-        <div className="flex-grow w-full h-full relative bg-[#f8f9fc]/50 backdrop-blur-3xl">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            nodeTypes={nodeTypes}
-            fitView
-            minZoom={0.5}
-            maxZoom={2}
-            className="w-full h-full"
-            nodesConnectable={false}
-            nodesDraggable={true}
-            elementsSelectable={true}
-          >
-            <Background variant={BackgroundVariant.Dots} gap={16} size={2} color="#cbd5e1" />
-            <Controls className="bg-white/80 backdrop-blur-md border border-slate-200 shadow-xl rounded-xl overflow-hidden fill-slate-700" />
-            <MiniMap 
-              className="bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xl"
-              maskColor="rgba(248, 250, 252, 0.7)"
-              nodeColor={(n: any) => {
-                const type = n.data?.type;
-                if(type === 'law') return '#3b82f6';
-                if(type === 'fact') return '#10b981';
-                if(type === 'conclusion') return '#a855f7';
-                if(type === 'exception') return '#f59e0b';
-                return '#94a3b8';
-              }} 
-            />
-          </ReactFlow>
-        </div>
-
-      </div>
+    <div className="w-full h-full relative bg-obsidian-950/20 rounded-3xl overflow-hidden animate-fade-in-up">
+      {/* React Flow Canvas */}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        nodeTypes={nodeTypes}
+        fitView
+        minZoom={0.5}
+        maxZoom={2}
+        className="w-full h-full"
+        nodesConnectable={false}
+        nodesDraggable={true}
+        elementsSelectable={true}
+      >
+        <Background variant={BackgroundVariant.Dots} gap={16} size={2} color="#475569" />
+        <Controls className="bg-obsidian-900/80 backdrop-blur-md border border-white/5 shadow-xl rounded-xl overflow-hidden fill-gold-500 text-gold-500" />
+        <MiniMap 
+          className="bg-obsidian-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl"
+          maskColor="rgba(10, 10, 11, 0.7)"
+          nodeColor={(n: { data?: { type?: string } }) => {
+            const type = n.data?.type;
+            if(type === 'law') return '#d4af37';
+            if(type === 'fact') return '#10b981';
+            if(type === 'conclusion') return '#a855f7';
+            if(type === 'exception') return '#f59e0b';
+            return '#475569';
+          }} 
+        />
+      </ReactFlow>
     </div>
   );
 }

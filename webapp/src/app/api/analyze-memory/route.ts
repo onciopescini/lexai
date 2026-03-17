@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { getEmbeddings } from '@/lib/gemini';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     // 1. Fetch unanalyzed chat sessions (limit to 10 at a time to avoid timeout/rate limits)
-    const { data: sessions, error: fetchError } = await supabase
+    const { data: sessions, error: fetchError } = await supabaseAdmin
       .from('chat_sessions')
       .select('*')
       .eq('analyzed', false)
@@ -58,7 +58,7 @@ export async function GET() {
             const insightEmbedding = await getEmbeddings(cleanInsight);
 
             // Save to agent_memories
-            const { error: insertError } = await supabase.from('agent_memories').insert([{
+            const { error: insertError } = await supabaseAdmin.from('agent_memories').insert([{
               memory_text: cleanInsight,
               embedding: insightEmbedding,
               importance_score: 1.0,
@@ -75,7 +75,7 @@ export async function GET() {
       }
 
       // Mark session as analyzed
-      await supabase
+      await supabaseAdmin
         .from('chat_sessions')
         .update({ analyzed: true })
         .eq('id', session.id);

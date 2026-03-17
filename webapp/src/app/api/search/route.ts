@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { getEmbeddings, generateSynthesizedAnswer, generateTenthManRebuttal, generateLegalIllustration, factCheckResponse } from '@/lib/gemini';
 import { searchPerplexity } from '@/lib/perplexity';
 import { rerankDocuments, analyzeIntent } from '@/lib/groq';
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     }
 
     // --- PHASE 7: Log della query utente per il Trend Analyzer (Citizen Guardian) ---
-    supabase
+    supabaseAdmin
       .from('user_queries')
       .insert([{ query: query }])
       .then(({ error: logError }) => {
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     // 1. Cercare prima solo nel database e agent memories
     console.log(`[*] Avvio ricerca database (Supabase Hybrid + Agent Memories)...`);
     const [supabaseResult, memoryResult] = await Promise.all([
-      supabase.rpc('hybrid_search_legal_docs', {
+      supabaseAdmin.rpc('hybrid_search_legal_docs', {
         query_embedding: embedding,
         query_text: query,
         filter: filterCondition,
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
         full_text_weight: 1.0,
         semantic_weight: 1.0
       }),
-      supabase.rpc('match_agent_memories', {
+      supabaseAdmin.rpc('match_agent_memories', {
         query_embedding: embedding,
         match_threshold: 0.3,
         match_count: 3
@@ -171,7 +171,7 @@ export async function POST(req: Request) {
     const legalIllustration = await legalIllustrationPromise;
 
     // Salvataggio della sessione in DB
-    supabase.from('chat_sessions').insert([{ 
+    supabaseAdmin.from('chat_sessions').insert([{ 
       session_id: 'default_user', 
       user_query: query, 
       ai_response: baseThesis 
@@ -179,7 +179,7 @@ export async function POST(req: Request) {
       if (sessionError) console.error("Errore salvataggio sessione di chat:", sessionError);
     });
 
-    supabase.from('atena_truth_telemetry').insert([{
+    supabaseAdmin.from('atena_truth_telemetry').insert([{
       session_id: 'default_user',
       query_text: query,
       tenth_man_triggered: !effectiveDraftingMode,

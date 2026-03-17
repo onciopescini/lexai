@@ -39,6 +39,7 @@ import DaemonDashboard from "@/components/stateful/DaemonDashboard";
 import LegalDisclaimer from "@/components/ui/LegalDisclaimer";
 import { Footer } from "@/components/ui/Footer";
 import GenerativeBackground from "@/components/ui/GenerativeBackground";
+import CookieConsent from "@/components/ui/CookieConsent";
 
 export default function RootLayout({
   children,
@@ -57,6 +58,7 @@ export default function RootLayout({
         <Footer />
         <LegalDisclaimer />
         <DaemonDashboard />
+        <CookieConsent />
       </body>
     </html>
   );

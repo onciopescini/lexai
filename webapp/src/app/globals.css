@@ -88,4 +88,23 @@
   .glass-panel {
     @apply bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:bg-slate-900/60 dark:border-slate-800/50;
   }
+  .squircle {
+    border-radius: 1.5rem; /* Fallback */
+    /* Quintic superellipse approximation using mask image */
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><path d='M100 0C20 0 0 20 0 100s20 100 100 100 100-20 100-100S180 0 100 0z'/></svg>");
+    mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><path d='M100 0C20 0 0 20 0 100s20 100 100 100 100-20 100-100S180 0 100 0z'/></svg>");
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  .squircle-lg {
+    border-radius: 2rem; /* Fallback */
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><path d='M100 0C10 0 0 10 0 100s10 100 100 100 100-10 100-100S190 0 100 0z'/></svg>");
+    mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><path d='M100 0C10 0 0 10 0 100s10 100 100 100 100-10 100-100S190 0 100 0z'/></svg>");
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
 }

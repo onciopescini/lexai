@@ -68,22 +68,22 @@ export default function LegalFactCheck({ report }: { report: FactCheckReport }) 
   if (!report || !report.claims) return null;
 
   return (
-    <div className="mt-8 pt-6 border-t border-cyan-500/20 relative animate-fade-in-up">
-      <div className="absolute -top-[1px] left-0 w-1/4 h-[1px] bg-gradient-to-r from-cyan-500/50 to-transparent"></div>
+    <div className="mt-8 pt-6 border-t border-gold-500/20 relative animate-fade-in-up">
+      <div className="absolute -top-[1px] left-0 w-1/4 h-[1px] bg-gradient-to-r from-gold-500/50 to-transparent"></div>
       
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-          <h4 className="text-xs font-bold text-cyan-400/80 tracking-widest uppercase">Fact-Check Autonomo (Auto-Validazione)</h4>
+          <span className="w-2 h-2 rounded-full bg-gold-500 animate-pulse"></span>
+          <h4 className="text-xs font-bold text-gold-400/80 tracking-widest uppercase">Fact-Check Autonomo (Auto-Validazione)</h4>
         </div>
-        <span className="text-[10px] uppercase font-mono text-cyan-500/50 bg-cyan-500/10 px-2 py-0.5 rounded-sm">
+        <span className="text-[10px] uppercase font-mono text-gold-500/50 bg-gold-500/10 px-2 py-0.5 rounded-sm">
           Indipendente & Imparziale
         </span>
       </div>
 
       {/* Summary Card */}
-      <div className="p-5 rounded-2xl bg-[#0a0a0b]/80 border border-cyan-500/10 backdrop-blur-sm">
+      <div className="p-5 rounded-2xl bg-obsidian-900/80 border border-gold-500/10 backdrop-blur-sm">
         <div className="flex items-center gap-6">
           {/* Score Circle */}
           <ScoreCircle score={report.overall_score} />
@@ -116,7 +116,7 @@ export default function LegalFactCheck({ report }: { report: FactCheckReport }) 
         {/* Expand/Collapse Button */}
         <button 
           onClick={() => setExpanded(!expanded)} 
-          className="mt-4 w-full text-center text-xs text-cyan-400/60 hover:text-cyan-400 transition-colors py-2 border-t border-white/5"
+          className="mt-4 w-full text-center text-xs text-gold-400/60 hover:text-gold-400 transition-colors py-2 border-t border-white/5"
         >
           {expanded ? '▲ Nascondi dettaglio claims' : `▼ Mostra ${report.total_claims} claims analizzati`}
         </button>
