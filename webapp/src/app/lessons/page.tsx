@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
+const supabase = createClient();
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer';
 import Image from 'next/image';
 import Link from 'next/link';

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
+const supabase = createClient();
 
 interface TruthFeedbackProps {
   queryText: string;
