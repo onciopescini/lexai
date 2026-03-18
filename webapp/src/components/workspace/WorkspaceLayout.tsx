@@ -222,12 +222,16 @@ export default function WorkspaceLayout({
           </div>
         );
       case 'mindmap':
-        const mindmapData = activeArtifact.data as { nodes: Record<string, unknown>[], edges: Record<string, unknown>[] };
+        // eslint-disable-next-line no-case-declarations
+        const rawMindmap = activeArtifact.data as Record<string, unknown>;
+        // Handle both flat {nodes, edges} and nested {data: {nodes, edges}} from agent
+        // eslint-disable-next-line no-case-declarations
+        const mindmapData = (rawMindmap?.nodes ? rawMindmap : rawMindmap?.data ? rawMindmap.data : rawMindmap) as { nodes: Record<string, unknown>[], edges: Record<string, unknown>[] };
         return (
           <div className="w-full h-[600px] bg-marble-50/50 rounded-[32px] overflow-hidden border border-marble-200 relative">
             <MindMapViewer 
-              initialNodes={mindmapData.nodes} 
-              initialEdges={mindmapData.edges} 
+              initialNodes={mindmapData?.nodes} 
+              initialEdges={mindmapData?.edges} 
             />
           </div>
         );

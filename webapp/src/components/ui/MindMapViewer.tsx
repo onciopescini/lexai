@@ -97,16 +97,19 @@ const CustomNode = ({ data }: { data: { type?: string; label?: string; descripti
 export default function MindMapViewer({ initialNodes, initialEdges }: MindMapProps) {
   const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
 
+  const safeNodes = initialNodes || [];
+  const safeEdges = initialEdges || [];
+
   // Map initial nodes to the React Flow format injecting our 'custom' type
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const formattedNodes = initialNodes.map((n: Record<string, any>) => ({
+  const formattedNodes = safeNodes.map((n: Record<string, any>) => ({
     id: n.id,
     type: 'custom',
     position: { x: 0, y: 0 },
     data: { label: n.label, type: n.type, description: n.description }
   }));
 
-  const formattedEdges = initialEdges.map(e => ({
+  const formattedEdges = safeEdges.map(e => ({
     id: e.id,
     source: e.source,
     target: e.target,
@@ -119,14 +122,21 @@ export default function MindMapViewer({ initialNodes, initialEdges }: MindMapPro
     labelBgBorderRadius: 4,
   }));
 
-  const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-    formattedNodes as Node[],
-    formattedEdges as unknown as Edge[],
-    'TB'
-  );
+  const { nodes: layoutedNodes, edges: layoutedEdges } = safeNodes.length > 0
+    ? getLayoutedElements(formattedNodes as Node[], formattedEdges as unknown as Edge[], 'TB')
+    : { nodes: [], edges: [] };
 
   const [nodes, , onNodesChange] = useNodesState(layoutedNodes);
   const [edges, , onEdgesChange] = useEdgesState(layoutedEdges);
+
+  // Guard: if no data, show placeholder (after hooks)
+  if (safeNodes.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-marble-100/50 rounded-[32px]">
+        <p className="text-slate-400 text-sm">Nessun dato disponibile per la mappa mentale.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full relative bg-marble-100/50 rounded-[32px] overflow-hidden animate-fade-in-up">

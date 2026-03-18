@@ -52,22 +52,22 @@ export default function ThinkingIndicator() {
 
   return (
     <div className="w-full animate-fade-in-up">
-      <div className="p-6 rounded-[32px] rounded-tl-sm bg-gradient-to-b from-[#1A1A1C] to-[#0A0A0B] border border-white/10 relative overflow-hidden shadow-2xl">
+      <div className="p-6 rounded-[32px] rounded-tl-sm bg-gradient-to-b from-[#F5F0EB] to-[#EDE5DB] border border-[#D4C8B8]/40 relative overflow-hidden shadow-2xl">
         {/* Top progress glow */}
         <div className="absolute top-0 left-0 w-full h-1 overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500 animate-shimmer" 
+          <div className="h-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 animate-shimmer" 
                style={{ width: '200%', animation: 'shimmer 2s ease-in-out infinite' }}></div>
         </div>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center shadow-[0_0_10px_rgba(37,99,235,0.8)]">
+            <div className="w-6 h-6 rounded-md bg-amber-700 flex items-center justify-center shadow-[0_0_10px_rgba(180,120,60,0.5)]">
               <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>
-            <h3 className="text-sm font-semibold text-white/60 tracking-wider uppercase">Atena sta elaborando...</h3>
+            <h3 className="text-sm font-semibold text-amber-900/70 tracking-wider uppercase">Atena sta elaborando...</h3>
           </div>
-          <span className="text-xs text-white/20 font-mono tabular-nums">{elapsed}s</span>
+          <span className="text-xs text-amber-800/30 font-mono tabular-nums">{elapsed}s</span>
         </div>
 
         {/* Pipeline Phases */}
@@ -78,18 +78,18 @@ export default function ThinkingIndicator() {
 
             return (
               <div key={idx} className={`flex items-center gap-3 px-3 py-2 rounded-[24px] transition-all duration-500 ${
-                isActive ? 'bg-blue-500/10 border border-blue-500/20' : 
+                isActive ? 'bg-amber-700/10 border border-amber-700/20' : 
                 isDone ? 'opacity-60' : 
                 'opacity-25'
               }`}>
                 {/* Status indicator */}
                 <div className="w-5 h-5 flex items-center justify-center shrink-0">
                   {isDone ? (
-                    <span className="text-emerald-400 text-sm">✓</span>
+                    <span className="text-emerald-600 text-sm">✓</span>
                   ) : isActive ? (
-                    <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-3 h-3 border-2 border-amber-700 border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <div className="w-2 h-2 rounded-full bg-white/10"></div>
+                    <div className="w-2 h-2 rounded-full bg-amber-900/10"></div>
                   )}
                 </div>
                 
@@ -97,12 +97,12 @@ export default function ThinkingIndicator() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{phase.icon}</span>
-                    <span className={`text-sm font-medium ${isActive ? 'text-white/90' : isDone ? 'text-white/50' : 'text-white/30'}`}>
+                    <span className={`text-sm font-medium ${isActive ? 'text-amber-900/90' : isDone ? 'text-amber-900/50' : 'text-amber-900/30'}`}>
                       {phase.label}
                     </span>
                   </div>
                   {isActive && (
-                    <p className="text-[11px] text-blue-400/60 mt-0.5 ml-7 animate-pulse">{phase.sublabel}</p>
+                    <p className="text-[11px] text-amber-700/60 mt-0.5 ml-7 animate-pulse">{phase.sublabel}</p>
                   )}
                 </div>
               </div>
@@ -111,8 +111,8 @@ export default function ThinkingIndicator() {
         </div>
 
         {/* Legal Tip Rotator */}
-        <div className="px-4 py-3 rounded-[24px] bg-white/[0.02] border border-white/5">
-          <p className="text-xs text-white/30 leading-relaxed transition-all duration-500" key={currentTip}>
+        <div className="px-4 py-3 rounded-[24px] bg-amber-900/[0.04] border border-amber-900/5">
+          <p className="text-xs text-amber-900/40 leading-relaxed transition-all duration-500" key={currentTip}>
             {legalTips[currentTip]}
           </p>
         </div>
