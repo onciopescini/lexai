@@ -62,12 +62,12 @@ export default function ThinkingIndicator() {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-md bg-amber-700 flex items-center justify-center shadow-[0_0_10px_rgba(180,120,60,0.5)]">
+            <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center shadow-[0_0_10px_rgba(30,30,30,0.3)]">
               <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>
-            <h3 className="text-sm font-semibold text-amber-900/70 tracking-wider uppercase">Atena sta elaborando...</h3>
+            <h3 className="text-sm font-semibold text-slate-700/80 tracking-wider uppercase">Atena sta elaborando...</h3>
           </div>
-          <span className="text-xs text-amber-800/30 font-mono tabular-nums">{elapsed}s</span>
+          <span className="text-xs text-slate-500/40 font-mono tabular-nums">{elapsed}s</span>
         </div>
 
         {/* Pipeline Phases */}
@@ -78,7 +78,7 @@ export default function ThinkingIndicator() {
 
             return (
               <div key={idx} className={`flex items-center gap-3 px-3 py-2 rounded-[24px] transition-all duration-500 ${
-                isActive ? 'bg-amber-700/10 border border-amber-700/20' : 
+                isActive ? 'bg-slate-800/[0.06] border border-slate-400/20' : 
                 isDone ? 'opacity-60' : 
                 'opacity-25'
               }`}>
@@ -87,9 +87,9 @@ export default function ThinkingIndicator() {
                   {isDone ? (
                     <span className="text-emerald-600 text-sm">✓</span>
                   ) : isActive ? (
-                    <div className="w-3 h-3 border-2 border-amber-700 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-3 h-3 border-2 border-slate-700 border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <div className="w-2 h-2 rounded-full bg-amber-900/10"></div>
+                    <div className="w-2 h-2 rounded-full bg-slate-400/20"></div>
                   )}
                 </div>
                 
@@ -97,12 +97,12 @@ export default function ThinkingIndicator() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{phase.icon}</span>
-                    <span className={`text-sm font-medium ${isActive ? 'text-amber-900/90' : isDone ? 'text-amber-900/50' : 'text-amber-900/30'}`}>
+                    <span className={`text-sm font-medium ${isActive ? 'text-slate-800' : isDone ? 'text-slate-600' : 'text-slate-400'}`}>
                       {phase.label}
                     </span>
                   </div>
                   {isActive && (
-                    <p className="text-[11px] text-amber-700/60 mt-0.5 ml-7 animate-pulse">{phase.sublabel}</p>
+                    <p className="text-[11px] text-slate-500/60 mt-0.5 ml-7 animate-pulse">{phase.sublabel}</p>
                   )}
                 </div>
               </div>
@@ -111,8 +111,8 @@ export default function ThinkingIndicator() {
         </div>
 
         {/* Legal Tip Rotator */}
-        <div className="px-4 py-3 rounded-[24px] bg-amber-900/[0.04] border border-amber-900/5">
-          <p className="text-xs text-amber-900/40 leading-relaxed transition-all duration-500" key={currentTip}>
+        <div className="px-4 py-3 rounded-[24px] bg-slate-800/[0.03] border border-slate-300/10">
+          <p className="text-xs text-slate-500/50 leading-relaxed transition-all duration-500" key={currentTip}>
             {legalTips[currentTip]}
           </p>
         </div>

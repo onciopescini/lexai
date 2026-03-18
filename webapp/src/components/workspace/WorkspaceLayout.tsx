@@ -402,10 +402,17 @@ export default function WorkspaceLayout({
          {activeArtifact && (
             <div className="absolute inset-0 p-6 flex flex-col pt-10">
                <div className="flex items-center justify-between mb-8 pb-4 border-b border-marble-200 sticky top-0 bg-marble-50/90 backdrop-blur-md z-10">
-                  <h2 className="text-xl font-playfair font-black text-slate-800 flex items-center gap-3">
-                     <Sparkles className="w-5 h-5 text-slate-700" />
-                     {activeArtifact.title}
-                  </h2>
+                  <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-600 flex items-center justify-center shadow-lg">
+                       <Sparkles className="w-4 h-4 text-white" />
+                     </div>
+                     <div>
+                       <h2 className="text-lg font-black text-slate-800 tracking-tight">
+                          {activeArtifact.title}
+                       </h2>
+                       <p className="text-[10px] text-slate-400 font-medium tracking-wider uppercase">Generato da Atena AI Engine</p>
+                     </div>
+                  </div>
                   <button onClick={() => setActiveArtifact(null)} className="p-2 rounded-[24px] bg-white border border-marble-200 text-slate-500 hover:text-slate-800 shadow-sm transition-colors">
                      <X className="w-5 h-5" />
                   </button>
@@ -415,8 +422,8 @@ export default function WorkspaceLayout({
                   {renderCanvasContent()}
                </div>
                
-               <div className="mt-8 pt-6 border-t border-marble-200 flex justify-between items-center text-xs text-slate-500">
-                  <span>Generato contestualmente da Atena AI</span>
+               <div className="mt-8 pt-6 border-t border-marble-200 flex justify-between items-center text-[10px] text-slate-400">
+                  <span className="flex items-center gap-1.5">Powered by <span className="font-bold text-slate-500">Atena AI</span> · Perplexity · Google Gemini</span>
                   <div className="flex gap-4 border border-marble-200 rounded-[20px] px-3 py-1.5 bg-white shadow-sm">
                      <Share2 className="w-4 h-4 hover:text-slate-800 cursor-pointer transition-colors" />
                   </div>

@@ -62,25 +62,22 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 };
 
 const CustomNode = ({ data }: { data: { type?: string; label?: string; description?: string } }) => {
-  const bgColor = 
-    data.type === 'law' ? 'from-platinum-500/10 to-platinum-600/5 border-platinum-500/30' :
-    data.type === 'fact' ? 'from-emerald-500/10 to-emerald-600/5 border-emerald-500/30' :
-    data.type === 'conclusion' ? 'from-purple-500/10 to-purple-600/5 border-purple-500/30' :
-    data.type === 'exception' ? 'from-amber-500/10 to-amber-600/5 border-amber-500/30' :
-    'from-slate-500/10 to-slate-600/5 border-slate-500/30';
-
-  const icon = 
-    data.type === 'law' ? '⚖️' :
-    data.type === 'fact' ? '👤' :
-    data.type === 'conclusion' ? '🎯' :
-    data.type === 'exception' ? '⚠️' : '💡';
+  const config = 
+    data.type === 'law' ? { bg: 'from-slate-50 to-white border-slate-200', accent: 'bg-slate-700', icon: '⚖️', glow: 'shadow-slate-200/50' } :
+    data.type === 'fact' ? { bg: 'from-emerald-50 to-white border-emerald-200', accent: 'bg-emerald-600', icon: '👤', glow: 'shadow-emerald-200/50' } :
+    data.type === 'conclusion' ? { bg: 'from-purple-50 to-white border-purple-200', accent: 'bg-purple-600', icon: '🎯', glow: 'shadow-purple-200/50' } :
+    data.type === 'exception' ? { bg: 'from-amber-50 to-white border-amber-200', accent: 'bg-amber-600', icon: '⚠️', glow: 'shadow-amber-200/50' } :
+    data.type === 'concept' ? { bg: 'from-blue-50 to-white border-blue-200', accent: 'bg-blue-600', icon: '💡', glow: 'shadow-blue-200/50' } :
+    { bg: 'from-slate-50 to-white border-slate-200', accent: 'bg-slate-500', icon: '💡', glow: 'shadow-slate-200/50' };
 
   return (
-    <div className={`px-4 py-3 rounded-[24px] bg-white/80 backdrop-blur-md border shadow-lg bg-gradient-to-br ${bgColor} min-w-[200px] max-w-[280px]`}>
+    <div className={`relative px-4 py-3 rounded-2xl bg-gradient-to-br ${config.bg} border shadow-lg ${config.glow} min-w-[200px] max-w-[280px] hover:scale-105 transition-transform duration-200 group`}>
+      {/* Left accent bar */}
+      <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-full ${config.accent}`}></div>
       <Handle type="target" position={Position.Top} className="w-3 h-3 border-2 border-white bg-slate-400" />
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 mb-1">
-           <span className="text-lg">{icon}</span>
+      <div className="flex flex-col gap-1 pl-2">
+        <div className="flex items-center gap-2 mb-0.5">
+           <span className="text-base">{config.icon}</span>
            <h3 className="text-sm font-bold text-slate-800 leading-tight">{data.label}</h3>
         </div>
         {data.description && (
@@ -148,7 +145,8 @@ export default function MindMapViewer({ initialNodes, initialEdges }: MindMapPro
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         fitView
-        minZoom={0.5}
+        fitViewOptions={{ padding: 0.3, maxZoom: 1.2 }}
+        minZoom={0.3}
         maxZoom={2}
         className="w-full h-full"
         nodesConnectable={false}
