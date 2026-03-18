@@ -95,7 +95,7 @@ export default function AdminIngestionPage() {
             </p>
         </div>
 
-        <div className="bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+        <div className="bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-8">
             
             {/* Title Input */}
@@ -106,7 +106,7 @@ export default function AdminIngestionPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Es: Sentenza Cassazione Audio, Visura Catastale Roma..."
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                    className="w-full bg-black/40 border border-white/10 rounded-[24px] px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
                     disabled={isUploading}
                 />
             </div>
@@ -118,7 +118,7 @@ export default function AdminIngestionPage() {
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 group ${
+                    className={`border-2 border-dashed rounded-[24px] p-12 text-center cursor-pointer transition-all duration-300 group ${
                         file ? 'border-purple-500/50 bg-purple-500/5' : 'border-white/10 hover:border-purple-500/30 hover:bg-white/5'
                     }`}
                 >
@@ -163,14 +163,14 @@ export default function AdminIngestionPage() {
 
             {/* Status Messages */}
             {status.type !== 'idle' && (
-                <div className={`p-4 rounded-xl border flex gap-3 ${
+                <div className={`p-4 rounded-[24px] border flex gap-3 ${
                     status.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
                 }`}>
                     {status.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
                     <div>
                       <p className="font-medium">{status.message}</p>
                       {status.data && (
-                          <div className="mt-4 p-4 bg-black/40 rounded-lg border border-white/5">
+                          <div className="mt-4 p-4 bg-black/40 rounded-[20px] border border-white/5">
                               <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 font-bold">Trascrizione & Analisi Estratta (Vision/Audio API)</p>
                               <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{status.data}</p>
                           </div>
@@ -187,7 +187,7 @@ export default function AdminIngestionPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Inserisci la password di amministrazione..."
-                    className="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono"
+                    className="w-full bg-black/40 border border-purple-500/30 rounded-[24px] px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono"
                     disabled={isUploading}
                 />
             </div>
@@ -196,7 +196,7 @@ export default function AdminIngestionPage() {
             <button
                 type="submit"
                 disabled={isUploading || !file || !title || !password}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden group"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-4 px-6 rounded-[24px] shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden group"
             >
                 {isUploading ? (
                     <>
@@ -216,3 +216,4 @@ export default function AdminIngestionPage() {
     </div>
   );
 }
+

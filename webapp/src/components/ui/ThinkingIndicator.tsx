@@ -52,7 +52,7 @@ export default function ThinkingIndicator() {
 
   return (
     <div className="w-full animate-fade-in-up">
-      <div className="p-6 rounded-3xl rounded-tl-sm bg-gradient-to-b from-[#1A1A1C] to-[#0A0A0B] border border-white/10 relative overflow-hidden shadow-2xl">
+      <div className="p-6 rounded-[32px] rounded-tl-sm bg-gradient-to-b from-[#1A1A1C] to-[#0A0A0B] border border-white/10 relative overflow-hidden shadow-2xl">
         {/* Top progress glow */}
         <div className="absolute top-0 left-0 w-full h-1 overflow-hidden">
           <div className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500 animate-shimmer" 
@@ -77,7 +77,7 @@ export default function ThinkingIndicator() {
             const isDone = idx < currentPhase;
 
             return (
-              <div key={idx} className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-500 ${
+              <div key={idx} className={`flex items-center gap-3 px-3 py-2 rounded-[24px] transition-all duration-500 ${
                 isActive ? 'bg-blue-500/10 border border-blue-500/20' : 
                 isDone ? 'opacity-60' : 
                 'opacity-25'
@@ -111,7 +111,7 @@ export default function ThinkingIndicator() {
         </div>
 
         {/* Legal Tip Rotator */}
-        <div className="px-4 py-3 rounded-xl bg-white/[0.02] border border-white/5">
+        <div className="px-4 py-3 rounded-[24px] bg-white/[0.02] border border-white/5">
           <p className="text-xs text-white/30 leading-relaxed transition-all duration-500" key={currentTip}>
             {legalTips[currentTip]}
           </p>
@@ -120,3 +120,4 @@ export default function ThinkingIndicator() {
     </div>
   );
 }
+

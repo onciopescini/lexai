@@ -67,7 +67,7 @@ export default function GuardianFeed() {
       <nav className="w-full flex items-center justify-between p-6 max-w-6xl mx-auto border-b border-black/5 shrink-0 z-50 bg-[#fbfbfd]/70 backdrop-blur-xl sticky top-0 transition-all duration-300">
         <div className="flex items-center gap-3">
           <Link href="/">
-            <Image src="/images/atena-text-logo.png" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm cursor-pointer" priority />
+            <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm cursor-pointer" priority style={{ width: 'auto', height: 'auto' }} />
           </Link>
         </div>
         <div className="flex items-center gap-7 text-sm font-bold text-slate-500">
@@ -119,7 +119,7 @@ export default function GuardianFeed() {
               {[1, 2, 3].map((i) => (
                 <div key={i} className="relative w-full pl-0 md:pl-16">
                   <div className="absolute left-[19px] top-8 w-3.5 h-3.5 rounded-full border-2 border-[#fbfbfd] hidden md:block z-10 bg-slate-200/60 animate-pulse"></div>
-                  <div className="w-full p-8 rounded-3xl bg-white/40 backdrop-blur-xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+                  <div className="w-full p-8 rounded-[32px] bg-white/40 backdrop-blur-xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
                     <div className="flex flex-col gap-6">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -161,7 +161,7 @@ export default function GuardianFeed() {
                   {/* Timeline dot */}
                   <div className={`absolute left-[19px] top-8 w-3.5 h-3.5 rounded-full border-2 border-[#fbfbfd] hidden md:block z-10 transition-transform duration-300 group-hover:scale-125 ${getImpactDotColor(alert.impact_level)}`}></div>
                   
-                  <div className="w-full p-8 rounded-3xl bg-white/60 backdrop-blur-xl border border-black/5 hover:border-blue-500/20 hover:bg-white/90 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500">
+                  <div className="w-full p-8 rounded-[32px] bg-white/60 backdrop-blur-xl border border-black/5 hover:border-blue-500/20 hover:bg-white/90 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500">
                     
                     <div className="flex flex-col gap-5 relative z-10">
                       {/* Top Meta */}
@@ -228,3 +228,4 @@ export default function GuardianFeed() {
     </div>
   );
 }
+

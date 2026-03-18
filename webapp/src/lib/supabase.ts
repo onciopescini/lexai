@@ -25,6 +25,7 @@ export function getSupabaseAdmin() {
 // Backward-compatible: export as a getter so existing `supabase.from(...)` calls still work
 export const supabase = new Proxy({} as SupabaseClient, {
   get(_, prop) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (getSupabase() as any)[prop];
   }
 });
@@ -32,6 +33,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
 // Admin client proxy
 export const supabaseAdmin = new Proxy({} as SupabaseClient, {
   get(_, prop) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (getSupabaseAdmin() as any)[prop];
   }
 });

@@ -51,16 +51,16 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
       // If there is a language match, it's typically a code block, otherwise consider it inline
       if (match) {
         return (
-          <div className="rounded-2xl overflow-hidden my-6 border border-slate-200 shadow-sm shadow-slate-200/50 group">
-            <div className="bg-slate-100/80 backdrop-blur-sm text-slate-500 text-xs px-4 py-2 border-b border-slate-200 flex items-center justify-between font-mono uppercase tracking-widest font-bold">
+          <div className="rounded-[24px] overflow-hidden my-6 border border-marble-200 shadow-sm group">
+            <div className="bg-marble-50/80 backdrop-blur-sm text-slate-500 text-xs px-4 py-2 border-b border-marble-200 flex items-center justify-between font-mono uppercase tracking-widest font-bold">
                <span>{match[1]}</span>
                <div className="flex gap-1.5 opacity-60">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                  <div className="w-2.5 h-2.5 rounded-[24px] bg-red-400"></div>
+                  <div className="w-2.5 h-2.5 rounded-[24px] bg-amber-400"></div>
+                  <div className="w-2.5 h-2.5 rounded-[24px] bg-emerald-400"></div>
                </div>
             </div>
-            <pre className="bg-slate-900 p-5 overflow-x-auto text-[13px] md:text-sm text-slate-50 font-mono leading-relaxed selection:bg-blue-500/30">
+            <pre className="bg-slate-50 p-5 overflow-x-auto text-[13px] md:text-sm text-slate-800 font-mono leading-relaxed selection:bg-blue-500/30">
               <code className={className} {...props}>
                 {children}
               </code>
@@ -75,7 +75,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
       );
     },
     table: ({...props}) => (
-      <div className="overflow-x-auto my-8 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="overflow-x-auto my-8 rounded-[24px] border border-slate-200 shadow-sm">
         <table className="w-full text-left border-collapse min-w-full" {...props} />
       </div>
     ),
@@ -95,3 +95,4 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
     </div>
   );
 }
+

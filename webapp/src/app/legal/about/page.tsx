@@ -22,7 +22,7 @@ export default function AboutUs() {
             Siamo nati con un solo scopo: rendere la conoscenza giuridica inequivocabile, chirurgica e accessibile, distruggendo l&apos;asimmetria informativa formale. Tramite workflow iterativi &quot;LangGraph&quot; e meccanismi di fact-checking spietati (&quot;Protocollo Data-Clash&quot;), Atena non produce sentenze, produce **certezze analitiche**.
           </p>
 
-          <div className="my-10 p-6 bg-slate-900/50 border border-purple-500/20 rounded-xl">
+          <div className="my-10 p-6 bg-slate-900/50 border border-purple-500/20 rounded-[24px]">
             <h3 className="text-lg font-medium text-purple-300 mb-2">L&apos;Architettura Omnisciente</h3>
             <p className="text-sm text-slate-400">
               Atena unisce vettori HNSW ad alta dimensionalità (768d) con la potenza logica di LangChain. Se non sa una cosa, esplora la Gazzetta Ufficiale via Perplexity. Se allucina una legge, il suo &quot;Check Validator&quot; auto-distrugge la risposta e forza un nuovo ciclo logico prima di mostrartela.
@@ -38,3 +38,4 @@ export default function AboutUs() {
     </div>
   );
 }
+

@@ -77,23 +77,23 @@ export default function AsyncQueueTracker() {
       {/* Tracker Bell / Toggle */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-4 rounded-full bg-slate-900 border border-slate-700 shadow-2xl hover:scale-105 transition-transform group flex items-center justify-center"
+        className="relative p-4 rounded-[24px] bg-white border border-marble-200 shadow-xl hover:scale-105 hover:bg-marble-50 transition-all duration-300 group flex items-center justify-center"
       >
         <span className="absolute -top-1 -right-1 flex h-4 w-4">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500 border-2 border-slate-900 text-[9px] font-bold text-white items-center justify-center">
+          <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500 border-2 border-white text-[9px] font-bold text-white items-center justify-center">
             {tasks.length}
           </span>
         </span>
-        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-6 h-6 text-slate-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       </button>
 
       {/* Tracker Menu */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-[85vw] sm:w-80 max-w-[calc(100vw-2rem)] bg-white/90 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+        <div className="absolute bottom-16 right-0 w-[85vw] sm:w-80 max-w-[calc(100vw-2rem)] bg-white/95 backdrop-blur-xl border border-marble-200 rounded-[24px] shadow-xl overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-marble-100 bg-marble-50 flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
               Agentic Queue (Background)
@@ -101,7 +101,7 @@ export default function AsyncQueueTracker() {
           </div>
           <div className="max-h-80 overflow-y-auto p-3 flex flex-col gap-2">
             {tasks.map((task) => (
-              <div key={task.id} className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-blue-200 transition-colors">
+              <div key={task.id} className="p-3 bg-white border border-slate-100 rounded-[24px] shadow-sm hover:border-blue-200 transition-colors">
                 <p className="text-xs font-semibold text-slate-700 line-clamp-1 mb-2" title={task.query_text}>{`"${task.query_text}"`}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-slate-400 font-medium">
@@ -140,3 +140,4 @@ export default function AsyncQueueTracker() {
     </div>
   );
 }
+

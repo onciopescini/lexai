@@ -115,7 +115,7 @@ export default function LibraryPage() {
       <nav className="w-full flex items-center justify-between px-6 py-4 border-b border-black/5 shrink-0 z-50 bg-[#fbfbfd]/80 backdrop-blur-xl sticky top-0">
         <div className="flex items-center gap-3">
           <Link href="/">
-             <Image src="/images/atena-text-logo.png" alt="Atena Logo" width={100} height={32} className="object-contain drop-shadow-sm cursor-pointer hover:opacity-80 transition-opacity" priority />
+             <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={100} height={32} className="object-contain drop-shadow-sm cursor-pointer hover:opacity-80 transition-opacity" priority style={{ width: 'auto', height: 'auto' }} loading="eager" />
           </Link>
         </div>
         <div className="flex items-center gap-6 text-sm font-bold text-slate-500">
@@ -140,7 +140,7 @@ export default function LibraryPage() {
                 <div key={source.id} className="mb-4">
                   <button 
                     onClick={() => handleSourceClick(source.id, source.books)}
-                    className={`w-full text-left px-3 py-2 rounded-lg font-bold text-sm transition-colors ${activeCode === source.id ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}`}
+                    className={`w-full text-left px-3 py-2 rounded-[20px] font-bold text-sm transition-colors ${activeCode === source.id ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}`}
                   >
                     {source.title}
                   </button>
@@ -188,14 +188,14 @@ export default function LibraryPage() {
                      placeholder="Cerca articolo o parola..." 
                      value={searchQuery}
                      onChange={(e) => setSearchQuery(e.target.value)}
-                     className="pl-10 pr-4 py-2 w-full md:w-64 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white/80 backdrop-blur-sm shadow-sm transition-all" 
+                     className="pl-10 pr-4 py-2 w-full md:w-64 border border-slate-200 rounded-[24px] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white/80 backdrop-blur-sm shadow-sm transition-all" 
                    />
                    <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                  </div>
               </div>
 
               {/* View Lettura Documento */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.04)] overflow-hidden min-h-[500px]">
+              <div className="bg-white rounded-[32px] border border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.04)] overflow-hidden min-h-[500px]">
                 
                 {/* Header della View. Usiamo Titolo dinamico dal primo articolo (es. Titolo II) */}
                 <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50">
@@ -210,7 +210,7 @@ export default function LibraryPage() {
                           <div key={i} className="space-y-4">
                             <div className="h-6 bg-slate-200 rounded w-1/4"></div>
                             <div className="h-4 bg-slate-100 rounded w-1/3"></div>
-                            <div className="h-24 bg-slate-50 border border-slate-100 rounded-2xl w-full"></div>
+                            <div className="h-24 bg-slate-50 border border-slate-100 rounded-[24px] w-full"></div>
                           </div>
                         ))}
                      </div>
@@ -237,13 +237,13 @@ export default function LibraryPage() {
                              {art.titolo ? art.titolo : 'Disposizione'}
                           </h4>
                           
-                          <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-slate-700 bg-slate-50/50 p-5 rounded-2xl border border-slate-100 relative group-hover:bg-slate-50 transition-colors">
+                          <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-slate-700 bg-slate-50/50 p-5 rounded-[24px] border border-slate-100 relative group-hover:bg-slate-50 transition-colors">
                              {art.testo}
                              
                              {/* Bottone Link to Storico Versioni per Diff Demo. Potremmo puntare ad un articolo specifico via URL params nel Diff Demo */}
                              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Link href={`/diff-demo?articolo=${art.articolo_num}&codice=${encodeURIComponent(art.codice)}`}>
-                                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 shadow-sm px-2.5 py-1.5 rounded-lg hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                  <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 shadow-sm px-2.5 py-1.5 rounded-[20px] hover:text-blue-600 hover:border-blue-200 transition-colors">
                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                      Verifica Storico Versioni
                                   </button>
@@ -261,3 +261,4 @@ export default function LibraryPage() {
     </div>
   );
 }
+

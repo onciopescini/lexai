@@ -18,7 +18,7 @@ export default function DiffViewer({ oldText, newText, splitView = true }: DiffV
   }, [oldText, newText]);
 
   return (
-    <div className="flex flex-col w-full bg-white rounded-3xl border border-slate-200 overflow-hidden font-sans shadow-[0_10px_40px_rgba(0,0,0,0.04)] backdrop-blur-xl">
+    <div className="flex flex-col w-full bg-white rounded-[32px] border border-slate-200 overflow-hidden font-sans shadow-[0_10px_40px_rgba(0,0,0,0.04)] backdrop-blur-xl">
       
       {/* Header / Toolbar */}
       <div className="flex items-center justify-between px-6 py-4 bg-slate-50/80 border-b border-slate-200">
@@ -30,16 +30,16 @@ export default function DiffViewer({ oldText, newText, splitView = true }: DiffV
         </div>
         
         {/* Toggle View Mode */}
-        <div className="flex items-center bg-slate-200/50 rounded-xl p-1 border border-slate-200 shadow-inner">
+        <div className="flex items-center bg-slate-200/50 rounded-[24px] p-1 border border-slate-200 shadow-inner">
           <button 
             onClick={() => setIsSplit(false)}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${!isSplit ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-2 text-xs font-bold rounded-[20px] transition-all duration-300 ${!isSplit ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
           >
             Unificata
           </button>
           <button 
             onClick={() => setIsSplit(true)}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${isSplit ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-2 text-xs font-bold rounded-[20px] transition-all duration-300 ${isSplit ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
           >
             Affiancata
           </button>
@@ -111,3 +111,4 @@ export default function DiffViewer({ oldText, newText, splitView = true }: DiffV
     </div>
   );
 }
+

@@ -49,9 +49,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it" className="dark">
+    <html lang="it" className="light">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased min-h-screen flex flex-col bg-obsidian-950 text-slate-100 selection:bg-gold-500/30 overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased min-h-screen flex flex-col bg-marble-50 text-slate-900 selection:bg-platinum-400/30 overflow-x-hidden`}
       >
         <Suspense fallback={null}>
           <PostHogPageview />

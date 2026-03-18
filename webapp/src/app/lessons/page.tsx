@@ -43,7 +43,7 @@ export default function CivicLessonsDashboard() {
       {/* Navbar Minimal */}
       <nav className="w-full flex items-center justify-between p-6 max-w-6xl mx-auto border-b border-black/5 bg-[#fbfbfd]/70 backdrop-blur-xl sticky top-0 z-50">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <Image src="/images/atena-text-logo.png" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm" priority />
+          <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm" priority style={{ width: 'auto', height: 'auto' }} />
         </Link>
         <div className="flex items-center gap-7 text-sm font-bold text-slate-500">
           <Link href="/" className="hover:text-slate-900 transition-colors">Torna all&apos;Assistente</Link>
@@ -75,7 +75,7 @@ export default function CivicLessonsDashboard() {
         {loading ? (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="break-inside-avoid bg-white/40 backdrop-blur-xl border border-slate-100 rounded-3xl p-6 shadow-sm overflow-hidden">
+              <div key={i} className="break-inside-avoid bg-white/40 backdrop-blur-xl border border-slate-100 rounded-[32px] p-6 shadow-sm overflow-hidden">
                 <div className="flex items-start justify-between mb-4 gap-4">
                   <div className="w-3/4 h-5 bg-slate-200/60 rounded animate-pulse"></div>
                   <div className="w-8 h-8 rounded-full bg-slate-200/60 animate-pulse shrink-0"></div>
@@ -104,7 +104,7 @@ export default function CivicLessonsDashboard() {
             {lessons.map((lesson) => (
               <div 
                 key={lesson.id} 
-                className="break-inside-avoid bg-white/80 backdrop-blur-xl border border-black/5 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(59,130,246,0.08)] hover:-translate-y-1 hover:border-blue-200/50 transition-all duration-500 group relative overflow-hidden"
+                className="break-inside-avoid bg-white/80 backdrop-blur-xl border border-black/5 rounded-[32px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(59,130,246,0.08)] hover:-translate-y-1 hover:border-blue-200/50 transition-all duration-500 group relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-indigo-50/0 group-hover:from-blue-50/50 group-hover:to-indigo-50/50 transition-colors duration-500 pointer-events-none"></div>
                 
@@ -165,3 +165,4 @@ export default function CivicLessonsDashboard() {
     </div>
   );
 }
+

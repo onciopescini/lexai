@@ -5,11 +5,14 @@ import { PostHogProvider as CSPostHogProvider } from 'posthog-js/react'
 import { useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
-if (typeof window !== 'undefined') {
-  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY as string, {
+if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NODE_ENV === 'production') {
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
     api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
-    person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
-    capture_pageview: false // Disable automatic pageview capture, as we capture manually
+    person_profiles: 'identified_only',
+    capture_pageview: false,
+    loaded: (ph) => {
+      if (process.env.NODE_ENV === 'development') ph.opt_out_capturing();
+    }
   })
 }
 

@@ -123,62 +123,38 @@ export default function AtenaChat() {
         };
       }
 
-      const response = await fetch('http://localhost:8000/ask', {
+      const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({ query: requestBody.query })
       });
 
-      if (!response.body) throw new Error("No response body");
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6).trim();
-            if (dataStr === '[DONE]') {
-              setMessages(prev => prev.map(m => 
-                m.id === currentMessageId.current ? { ...m, isComplete: true } : m
-              ));
-              break;
-            }
-
-            try {
-              const data = JSON.parse(dataStr);
-              setMessages(prev => prev.map(m => {
-                if (m.id === currentMessageId.current) {
-                  if (data.type === 'message') {
-                    return { ...m, content: data.content };
-                  } else if (data.type === 'status' || data.type === 'tool') {
-                    return { 
-                      ...m, 
-                      statusUpdates: [...m.statusUpdates, { type: data.type, text: data.content }] 
-                    };
-                  } else if (data.type === 'error') {
-                    return { ...m, content: `**Errore di sistema:** ${data.content}`, isComplete: true };
-                  }
-                }
-                return m;
-              }));
-            } catch (e) {
-              console.error("Error parsing SSE JSON:", e, dataStr);
-            }
-          }
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Errore di connessione' }));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
+
+      const data = await response.json();
+
+      setMessages(prev => prev.map(m => {
+        if (m.id === currentMessageId.current) {
+          return { 
+            ...m, 
+            content: data.synthesizedAnswer || data.answer || 'Nessuna risposta ricevuta.',
+            isComplete: true,
+            statusUpdates: [
+              ...(data.intent ? [{ type: 'status', text: `Intent: ${data.intent}` }] : []),
+              ...(data.sources?.length ? [{ type: 'tool', text: `${data.sources.length} fonti trovate` }] : [])
+            ]
+          };
+        }
+        return m;
+      }));
     } catch (error) {
       console.error("Error connecting to Atena API:", error);
       setMessages(prev => prev.map(m => 
         m.id === currentMessageId.current 
-          ? { ...m, content: "**Errore di connessione:** Impossibile raggiungere l'Oracolo. Verifica che il server FastAPI sia in esecuzione sulla porta 8000.", isComplete: true } 
+          ? { ...m, content: "**Errore di connessione:** Impossibile raggiungere l'API di Atena. Riprova tra qualche secondo.", isComplete: true } 
           : m
       ));
     } finally {
@@ -193,7 +169,7 @@ export default function AtenaChat() {
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm transition-all duration-300">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <Link href="/" className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+             <Link href="/" className="flex items-center justify-center w-10 h-10 rounded-[24px] bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
              </Link>
              <div className="flex flex-col">
@@ -217,7 +193,7 @@ export default function AtenaChat() {
           <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
             {message.role === 'assistant' && (
                <div className="flex-shrink-0 mr-4 mt-1">
-                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-bold text-lg">
+                 <div className="w-10 h-10 rounded-[24px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-bold text-lg">
                    A
                  </div>
                </div>
@@ -228,13 +204,13 @@ export default function AtenaChat() {
               {message.role === 'user' && (
                 <div className="flex flex-col items-end gap-2">
                   {message.attachment && (
-                    <div className="bg-slate-800 text-slate-200 rounded-2xl px-4 py-2 text-sm flex items-center gap-2 shadow-sm border border-slate-700/50">
+                    <div className="bg-slate-800 text-slate-200 rounded-[24px] px-4 py-2 text-sm flex items-center gap-2 shadow-sm border border-slate-700/50">
                       <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                       <span className="font-medium truncate max-w-[200px]">{message.attachment.name}</span>
                     </div>
                   )}
                   {message.content && (
-                    <div className="bg-slate-900 text-white rounded-3xl rounded-tr-sm px-6 py-4 shadow-md text-[15px] leading-relaxed">
+                    <div className="bg-slate-900 text-white rounded-[32px] rounded-tr-sm px-6 py-4 shadow-md text-[15px] leading-relaxed">
                       {message.content}
                     </div>
                   )}
@@ -262,7 +238,7 @@ export default function AtenaChat() {
                   )}
 
                   {/* Main Content */}
-                  <div className="bg-white border border-slate-200/60 rounded-3xl rounded-tl-sm px-6 py-5 shadow-sm">
+                  <div className="bg-white border border-slate-200/60 rounded-[32px] rounded-tl-sm px-6 py-5 shadow-sm">
                     {!message.isComplete && !message.content ? (
                       <div className="flex items-center gap-2 h-6">
                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -291,7 +267,7 @@ export default function AtenaChat() {
           
           {/* File preview */}
           {selectedFile && (
-            <div className="mb-3 flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-xl w-fit border border-blue-100/50 shadow-sm animate-fade-in-up">
+            <div className="mb-3 flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-[24px] w-fit border border-blue-100/50 shadow-sm animate-fade-in-up">
               <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
               <span className="text-sm font-medium truncate max-w-[200px]">{selectedFile.name}</span>
               <button 
@@ -307,7 +283,7 @@ export default function AtenaChat() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="relative flex items-end gap-2 bg-white rounded-3xl sm:rounded-full border border-slate-300 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all p-1.5 overflow-hidden">
+          <form onSubmit={handleSubmit} className="relative flex items-end gap-2 bg-white rounded-[32px] sm:rounded-full border border-slate-300 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all p-1.5 overflow-hidden">
             
             <input 
               type="file" 
@@ -362,3 +338,4 @@ export default function AtenaChat() {
     </div>
   );
 }
+

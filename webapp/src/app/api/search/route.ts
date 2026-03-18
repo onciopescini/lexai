@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
-import { getEmbeddings, generateSynthesizedAnswer, generateTenthManRebuttal, generateLegalIllustration, factCheckResponse } from '@/lib/gemini';
-import { searchPerplexity } from '@/lib/perplexity';
-import { rerankDocuments, analyzeIntent } from '@/lib/groq';
+import { supabaseAdmin } from '@/lib/supabase';
+import { getEmbeddings, generateLegalIllustration, factCheckResponse } from '@/lib/gemini';
+import { rerankDocuments } from '@/lib/groq';
+import { RouterAgent } from '@/lib/agents/RouterAgent';
+import { AtenaSearchAgent } from '@/lib/agents/AtenaSearchAgent';
+import { PicoClawAgent } from '@/lib/agents/PicoClawAgent';
+import { TenthManAgent, TenthManInput } from '@/lib/agents/TenthManAgent';
+import { LiveWebAgent, LiveWebInput } from '@/lib/agents/LiveWebAgent';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Consenti fino a 60 secondi per l'esecuzione del pipeline RAG complesso su Vercel
@@ -58,7 +62,9 @@ export async function POST(req: Request) {
 
     // --- PHASE 14: Agentic RAG Router ---
     console.log(`[*] Esecuzione Agentic Router per classificazione intento...`);
-    const { intent, confidence } = await analyzeIntent(query);
+    const routerAgent = new RouterAgent();
+    const routerOutput = await routerAgent.execute({ query });
+    const { intent, confidence } = routerOutput.data as { intent: string, confidence: number };
     console.log(`[*] Intento Rilevato: ${intent.toUpperCase()} (Sicurezza: ${Math.round(confidence * 100)}%)`);
 
     if (intent === 'general_chat') {
@@ -125,7 +131,7 @@ export async function POST(req: Request) {
       console.log('[*] Reranking skipped (Groq unavailable), using vector similarity order.');
     }
 
-    let contextText = rankedDocs.map(
+    const contextText = rankedDocs.map(
       (doc: {title: string; source_url: string; content: string}) => `FONTE UFFICIALE DB: ${doc.title} \nURL: ${doc.source_url}\nTESTO:\n${doc.content}\n---`
     ).join('\n');
 
@@ -137,7 +143,23 @@ export async function POST(req: Request) {
     // 3. Generare la Base Thesis (Primary AI) usando SOLO fonti interne
     console.log('[*] Generazione Tesi Base AI (Internal Knowledge Only)...');
     const conversationHistory = history || [];
-    const baseThesis = await generateSynthesizedAnswer(query, contextText, conversationHistory, effectiveDraftingMode, agentMemoriesText);
+    let baseThesis = "";
+    
+    if (effectiveDraftingMode) {
+      const draftingAgent = new PicoClawAgent();
+      const draftOutput = await draftingAgent.execute({ 
+        query, 
+        context: { history: conversationHistory, documents: contextText, systemMemories: agentMemoriesText } 
+      });
+      baseThesis = draftOutput.data as string;
+    } else {
+      const searchAgent = new AtenaSearchAgent();
+      const searchOutput = await searchAgent.execute({ 
+        query, 
+        context: { history: conversationHistory, documents: contextText, systemMemories: agentMemoriesText } 
+      });
+      baseThesis = searchOutput.data as string;
+    }
 
     // 4. DATA-CLASH PROTOCOL (Se non siamo in drafting)
     let perplexityValidation = null;
@@ -153,16 +175,29 @@ export async function POST(req: Request) {
     if (!effectiveDraftingMode) {
       // 4a. Perplexity esegue l'adversarial web check contro la tesi base
       console.log('[*] Esecuzione Perplexity Data-Clash contro la Tesi Base...');
-      perplexityValidation = await searchPerplexity(query, baseThesis);
+      const liveWebAgent = new LiveWebAgent();
+      const webOutput = await liveWebAgent.execute({ query, baseThesis } as LiveWebInput);
+      perplexityValidation = webOutput.data as string;
       
       const tenthManContext = `CONTESTO UFFICIALE DB:\n${contextText}\n\n=== CONTRO-ANALISI WEB (PERPLEXITY DATA-CLASH) ===\n${perplexityValidation || "Nessun aggiornamento web."}`;
       
       // 4b. Il Decimo Uomo valuta sia il DB sia l'attacco di Perplexity
       console.log('[*] Esecuzione Protocollo Decimo Uomo...');
-      [tenthManAnswer, factCheckReport] = await Promise.all([
-        generateTenthManRebuttal(query, tenthManContext, baseThesis),
+      
+      const tenthManAgent = new TenthManAgent();
+      const tenthManOutputPromise = tenthManAgent.execute({ 
+        query, 
+        context: { documents: tenthManContext }, 
+        originalAnswer: baseThesis 
+      } as TenthManInput);
+      
+      const [tenthManOutput, factCheckRes] = await Promise.all([
+        tenthManOutputPromise,
         factCheckResponse(query, baseThesis, contextText)
       ]);
+      
+      tenthManAnswer = tenthManOutput.data as string;
+      factCheckReport = factCheckRes;
     } else {
       // Drafting mode
       factCheckReport = { classification: "verified", justification: "Modalità Drafting (Stesura) attiva dal router. Modulo Fact-Check automatizzato bypassato." };

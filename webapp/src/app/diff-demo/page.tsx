@@ -84,7 +84,7 @@ function DiffDemoContent() {
                       <select 
                         value={oldVersionIndex} 
                         onChange={(e) => setOldVersionIndex(Number(e.target.value))}
-                        className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-100 shadow-sm outline-none cursor-pointer"
+                        className="px-3 py-1.5 rounded-[20px] bg-red-50 text-red-600 border border-red-100 shadow-sm outline-none cursor-pointer"
                       >
                          {history.map((v, i) => (
                            <option key={i} value={i}>{v.versione_nome}</option>
@@ -96,7 +96,7 @@ function DiffDemoContent() {
                       <select 
                         value={newVersionIndex} 
                         onChange={(e) => setNewVersionIndex(Number(e.target.value))}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm outline-none cursor-pointer"
+                        className="px-3 py-1.5 rounded-[20px] bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm outline-none cursor-pointer"
                       >
                          {history.map((v, i) => (
                            <option key={i} value={i}>{v.versione_nome} {v.is_vigente ? '(Vigente)' : ''}</option>
@@ -107,13 +107,13 @@ function DiffDemoContent() {
             </div>
             
             {history.length === 1 && (
-                <div className="mb-6 p-4 bg-blue-50/50 text-blue-700 text-sm font-medium border border-blue-100/50 rounded-xl">
+                <div className="mb-6 p-4 bg-blue-50/50 text-blue-700 text-sm font-medium border border-blue-100/50 rounded-[24px]">
                     Questo articolo ha solo una versione storica registrata. Non sono presenti modifiche.
                 </div>
             )}
 
             {history.length > 0 && (
-                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
+                <div className="bg-slate-50 border border-slate-100 rounded-[24px] p-6">
                     <DiffViewer oldText={oldText} newText={newText} splitView={true} />
                 </div>
             )}
@@ -133,10 +133,10 @@ export default function DiffDemoPage() {
 
       <main className="relative z-10 p-8 max-w-6xl mx-auto pt-24">
         {/* Header */}
-        <div className="flex animate-fade-in-up items-center justify-between mb-12 pb-6 rounded-2xl bg-white/60 p-6 backdrop-blur-xl shadow-sm border border-slate-200/60">
+        <div className="flex animate-fade-in-up items-center justify-between mb-12 pb-6 rounded-[24px] bg-white/60 p-6 backdrop-blur-xl shadow-sm border border-slate-200/60">
           <div className="flex items-center gap-6">
-             <div className="flex items-center justify-center p-4 bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-slate-100">
-               <Image src="/images/atena-text-logo.png" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm" priority />
+             <div className="flex items-center justify-center p-4 bg-white rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-slate-100">
+              <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm" priority style={{ width: 'auto', height: 'auto' }} />
              </div>
              <div>
                <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">
@@ -148,14 +148,14 @@ export default function DiffDemoPage() {
              </div>
           </div>
           <Link href="/library">
-             <button className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2">
+             <button className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-[24px] text-sm font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2">
                Torna alla Biblioteca
              </button>
           </Link>
         </div>
 
         {/* Diff Viewer Card */}
-        <div className="bg-white p-6 md:p-10 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-slate-200 min-h-[400px]">
+        <div className="bg-white p-6 md:p-10 rounded-[32px] shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-slate-200 min-h-[400px]">
            <Suspense fallback={<div className="text-center py-20 animate-pulse text-slate-500 font-medium">Inizializzazione...</div>}>
               <DiffDemoContent />
            </Suspense>
@@ -164,3 +164,4 @@ export default function DiffDemoPage() {
     </div>
   );
 }
+

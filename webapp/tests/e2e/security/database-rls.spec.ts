@@ -55,6 +55,7 @@ test.describe('Database Security — Row Level Security (RLS)', () => {
   test('Unauthenticated user cannot write to agent_memories', async () => {
     const { error } = await supabase.from('agent_memories').insert({
       memory_text: 'malicious memory',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     
     // We expect an error due to RLS preventing unauthenticated inserts

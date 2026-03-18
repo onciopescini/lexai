@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getEmbeddings, generateSynthesizedAnswer, generateTenthManRebuttal, generateLegalIllustration, factCheckResponse } from '@/lib/gemini';
-import { searchPerplexity } from '@/lib/perplexity';
+import { getEmbeddings, generateLegalIllustration, factCheckResponse } from '@/lib/gemini';
 import { rerankDocuments } from '@/lib/groq';
+import { AtenaSearchAgent } from '@/lib/agents/AtenaSearchAgent';
+import { PicoClawAgent } from '@/lib/agents/PicoClawAgent';
+import { TenthManAgent, TenthManInput } from '@/lib/agents/TenthManAgent';
+import { LiveWebAgent, LiveWebInput } from '@/lib/agents/LiveWebAgent';
 // Use require for pdf-parse to avoid Next.js ESM/Turbopack default export issues
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
@@ -45,10 +48,10 @@ export async function POST(req: Request) {
         match_count: 5,
         filter: {}
       }),
-      searchPerplexity(
-        `Analisi legale stringente, sentenze recenti e riferimenti giurisprudenziali.`,
-        `Tema trattato nell'estratto del documento: ${pdfText.substring(0, 500)}`
-      )
+      new LiveWebAgent().execute({ 
+        query: `Analisi legale stringente, sentenze recenti e riferimenti giurisprudenziali.`, 
+        baseThesis: `Tema trattato nell'estratto del documento: ${pdfText.substring(0, 500)}` 
+      } as LiveWebInput).then((res) => res.data as string | null)
     ]);
 
     const { data: documents, error } = supabaseResult;
@@ -90,20 +93,31 @@ export async function POST(req: Request) {
     `;
 
     console.log('[*] Generazione Analisi RAG per il PDF...');
-    const aiAnswer = await generateSynthesizedAnswer(analysisQuery, contextText, history, draftingMode);
+    let aiAnswer = "";
+    if (draftingMode) {
+      const picoClaw = new PicoClawAgent();
+      const res = await picoClaw.execute({ query: analysisQuery, context: { history, documents: contextText } });
+      aiAnswer = res.data as string;
+    } else {
+      const atenaSearch = new AtenaSearchAgent();
+      const res = await atenaSearch.execute({ query: analysisQuery, context: { history, documents: contextText } });
+      aiAnswer = res.data as string;
+    }
 
     const imageTopicPrompt = `Analisi documentale: ${file.name}`;
     
     // 4. Protocollo Decimo Uomo & Fact Checking
-    const [tenthManAnswer, legalIllustration, factCheckReport] = await Promise.all([
+    const tenthManAgent = new TenthManAgent();
+    const [tenthManOutput, legalIllustration, factCheckReport] = await Promise.all([
       draftingMode 
-        ? Promise.resolve("*(Il Protocollo Decimo Uomo è disattivato in modalità Drafting. Rivedere attentamente il documento generato).*") 
-        : generateTenthManRebuttal(analysisQuery, contextText, aiAnswer),
+        ? Promise.resolve({ data: "*(Il Protocollo Decimo Uomo è disattivato in modalità Drafting. Rivedere attentamente il documento generato).*" }) 
+        : tenthManAgent.execute({ query: analysisQuery, context: { documents: contextText }, originalAnswer: aiAnswer } as TenthManInput),
       generateLegalIllustration(imageTopicPrompt),
       draftingMode 
         ? Promise.resolve({ classification: "verified", justification: "Modalità Drafting (Stesura) attiva." })
         : factCheckResponse(analysisQuery, aiAnswer, contextText)
     ]);
+    const tenthManAnswer = tenthManOutput.data as string;
 
     return NextResponse.json({
       response: aiAnswer,

@@ -55,8 +55,8 @@ function ScoreCircle({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-extrabold text-white">{score}</span>
-        <span className="text-[9px] text-white/40 uppercase tracking-wider">/ 100</span>
+        <span className="text-2xl font-extrabold text-slate-800">{score}</span>
+        <span className="text-[9px] text-slate-400 uppercase tracking-wider">/ 100</span>
       </div>
     </div>
   );
@@ -68,22 +68,22 @@ export default function LegalFactCheck({ report }: { report: FactCheckReport }) 
   if (!report || !report.claims) return null;
 
   return (
-    <div className="mt-8 pt-6 border-t border-gold-500/20 relative animate-fade-in-up">
-      <div className="absolute -top-[1px] left-0 w-1/4 h-[1px] bg-gradient-to-r from-gold-500/50 to-transparent"></div>
+    <div className="mt-8 pt-6 border-t border-marble-200 relative animate-fade-in-up">
+      <div className="absolute -top-[1px] left-0 w-1/4 h-[1px] bg-gradient-to-r from-platinum-300 to-transparent"></div>
       
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-gold-500 animate-pulse"></span>
-          <h4 className="text-xs font-bold text-gold-400/80 tracking-widest uppercase">Fact-Check Autonomo (Auto-Validazione)</h4>
+          <span className="w-2 h-2 rounded-[24px] bg-blue-500 animate-pulse"></span>
+          <h4 className="text-xs font-bold text-slate-600 tracking-widest uppercase">Fact-Check Autonomo (Auto-Validazione)</h4>
         </div>
-        <span className="text-[10px] uppercase font-mono text-gold-500/50 bg-gold-500/10 px-2 py-0.5 rounded-sm">
+        <span className="text-[10px] uppercase font-mono text-slate-500 bg-marble-100 border border-marble-200 px-2 py-0.5 rounded-sm">
           Indipendente & Imparziale
         </span>
       </div>
 
       {/* Summary Card */}
-      <div className="p-5 rounded-2xl bg-obsidian-900/80 border border-gold-500/10 backdrop-blur-sm">
+      <div className="p-5 rounded-[24px] bg-white/80 border border-marble-200 backdrop-blur-sm shadow-sm">
         <div className="flex items-center gap-6">
           {/* Score Circle */}
           <ScoreCircle score={report.overall_score} />
@@ -92,23 +92,23 @@ export default function LegalFactCheck({ report }: { report: FactCheckReport }) 
           <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="flex items-center gap-2 text-sm">
               <span>✅</span>
-              <span className="text-emerald-400 font-bold">{report.verified}</span>
-              <span className="text-white/30 text-xs">Verificati</span>
+              <span className="text-emerald-600 font-bold">{report.verified}</span>
+              <span className="text-slate-500 text-xs">Verificati</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span>⚠️</span>
-              <span className="text-amber-400 font-bold">{report.partial}</span>
-              <span className="text-white/30 text-xs">Parziali</span>
+              <span className="text-amber-600 font-bold">{report.partial}</span>
+              <span className="text-slate-500 text-xs">Parziali</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span>❌</span>
-              <span className="text-red-400 font-bold">{report.unsupported}</span>
-              <span className="text-white/30 text-xs">Non Supportati</span>
+              <span className="text-red-600 font-bold">{report.unsupported}</span>
+              <span className="text-slate-500 text-xs">Non Supportati</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span>ℹ️</span>
-              <span className="text-blue-400 font-bold">{report.opinion}</span>
-              <span className="text-white/30 text-xs">Opinioni</span>
+              <span className="text-blue-600 font-bold">{report.opinion}</span>
+              <span className="text-slate-500 text-xs">Opinioni</span>
             </div>
           </div>
         </div>
@@ -116,7 +116,7 @@ export default function LegalFactCheck({ report }: { report: FactCheckReport }) 
         {/* Expand/Collapse Button */}
         <button 
           onClick={() => setExpanded(!expanded)} 
-          className="mt-4 w-full text-center text-xs text-gold-400/60 hover:text-gold-400 transition-colors py-2 border-t border-white/5"
+          className="mt-4 w-full text-center text-xs text-slate-500 hover:text-slate-700 font-medium transition-colors py-2 border-t border-marble-200"
         >
           {expanded ? '▲ Nascondi dettaglio claims' : `▼ Mostra ${report.total_claims} claims analizzati`}
         </button>
@@ -127,18 +127,18 @@ export default function LegalFactCheck({ report }: { report: FactCheckReport }) 
             {report.claims.map((claim, idx) => {
               const config = verdictConfig[claim.verdict];
               return (
-                <div key={idx} className={`p-3 rounded-xl ${config.bg} ${config.border} border flex flex-col gap-1.5`}>
+                <div key={idx} className={`p-3 rounded-[24px] bg-marble-50 border-marble-200 border flex flex-col gap-1.5`}>
                   <div className="flex items-start gap-2">
                     <span className="text-sm mt-0.5 shrink-0">{config.icon}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white/80 leading-relaxed">{claim.claim}</p>
+                      <p className="text-sm text-slate-700 leading-relaxed font-medium">{claim.claim}</p>
                       <div className="flex items-center gap-2 mt-1.5">
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${config.text}`}>{config.label}</span>
-                        <span className="text-[10px] text-white/25">•</span>
-                        <span className="text-[10px] text-white/30 truncate">{claim.source_ref}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest text-slate-600`}>{config.label}</span>
+                        <span className="text-[10px] text-slate-300">•</span>
+                        <span className="text-[10px] text-slate-500 font-mono truncate">{claim.source_ref}</span>
                       </div>
                       {claim.explanation && (
-                        <p className="text-[11px] text-white/40 mt-1 leading-relaxed italic">{claim.explanation}</p>
+                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed italic">{claim.explanation}</p>
                       )}
                     </div>
                   </div>
@@ -147,8 +147,8 @@ export default function LegalFactCheck({ report }: { report: FactCheckReport }) 
             })}
             
             {/* Methodology Footer */}
-            <div className="pt-3 border-t border-white/5">
-              <p className="text-[10px] text-white/20 italic leading-relaxed">
+            <div className="pt-3 border-t border-marble-200">
+              <p className="text-[10px] text-slate-400 italic leading-relaxed">
                 🔒 {report.methodology}
               </p>
             </div>
@@ -158,3 +158,4 @@ export default function LegalFactCheck({ report }: { report: FactCheckReport }) 
     </div>
   );
 }
+

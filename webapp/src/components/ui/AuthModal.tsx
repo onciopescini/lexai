@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 
 interface AuthModalProps {
   onClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSuccess: (user: any) => void;
 }
 
@@ -49,8 +50,8 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
           setError("Controlla la tua email per il link di conferma.");
         }
       }
-    } catch (err: any) {
-      setError(err.message || 'Errore di autenticazione');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Errore di autenticazione');
     } finally {
       setLoading(false);
     }
@@ -68,8 +69,8 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
       });
       if (signInError) throw signInError;
       // Il redirect avviene istantaneamente, quindi non invochiamo onSuccess
-    } catch (err: any) {
-      setError(err.message || 'Errore di autenticazione con Google');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Errore di autenticazione con Google');
       setLoading(false);
     }
   };
@@ -78,11 +79,11 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-fade-in-up">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
       
-      <div className="relative w-full max-w-md glass-panel rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-white/20 bg-white/70 p-8">
+      <div className="relative w-full max-w-md glass-panel rounded-[32px] overflow-hidden shadow-2xl flex flex-col border border-white/20 bg-white/70 p-8">
         
         {/* Header Icon */}
         <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-6 transition-transform">
+          <div className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-6 transition-transform">
              <span className="text-3xl text-white">⚖️</span>
           </div>
         </div>
@@ -97,7 +98,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
         </p>
 
         {error && (
-          <div className="p-3 mb-6 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold text-center">
+          <div className="p-3 mb-6 bg-red-50 border border-red-200 text-red-600 rounded-[24px] text-xs font-bold text-center">
             {error}
           </div>
         )}
@@ -109,7 +110,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-white/50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder-slate-400"
+              className="w-full bg-white/50 border border-slate-200 text-slate-800 rounded-[24px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder-slate-400"
               placeholder="tuonome@studio.com"
               required
             />
@@ -121,7 +122,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder-slate-400"
+              className="w-full bg-white/50 border border-slate-200 text-slate-800 rounded-[24px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder-slate-400"
               placeholder="••••••••"
               required
             />
@@ -130,7 +131,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
           <button 
             type="submit" 
             disabled={loading}
-            className="mt-4 w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20 disabled:opacity-70"
+            className="mt-4 w-full bg-slate-900 text-white font-bold py-3.5 rounded-[24px] hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20 disabled:opacity-70"
           >
             {loading ? (
               <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -151,7 +152,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
           onClick={handleGoogleAuth}
           type="button"
           disabled={loading}
-          className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-sm disabled:opacity-70 group"
+          className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-[24px] hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-sm disabled:opacity-70 group"
         >
           <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -175,3 +176,4 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     </div>
   );
 }
+

@@ -15,7 +15,7 @@ export default function DisclaimerPage() {
         <div className="prose prose-invert prose-red max-w-none">
           <p className="text-slate-400">Avviso Importante</p>
           
-          <div className="mt-8 p-6 bg-red-950/30 border border-red-500/30 rounded-xl">
+          <div className="mt-8 p-6 bg-red-950/30 border border-red-500/30 rounded-[24px]">
             <h2 className="text-xl font-semibold text-red-400 mb-4 mt-0">Nessun Rapporto Avvocato-Cliente</h2>
             <p className="text-slate-200">
               L&apos;utilizzo di Atena, l&apos;invio di quesiti o la generazione di documenti **non** instaura alcun rapporto avvocato-cliente tra l&apos;utente e gli sviluppatori della piattaforma.
@@ -34,3 +34,4 @@ export default function DisclaimerPage() {
     </div>
   );
 }
+

@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 export default function GenerativeBackground() {
   return (
-    <div className="fixed inset-0 z-[-1] overflow-hidden bg-obsidian-950 pointer-events-none">
+    <div className="fixed inset-0 z-[-1] overflow-hidden bg-marble-50 pointer-events-none">
       {/* 4K Generated Background Image */}
       <div className="absolute inset-0 z-0 opacity-40">
         <Image 
@@ -47,8 +47,8 @@ export default function GenerativeBackground() {
       */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] z-10"></div>
       
-      {/* Dark Vignette to keep text readable */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(5,11,20,0.8)_100%)] z-20"></div>
+      {/* Light Vignette to keep text readable */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(255,255,255,0.7)_100%)] z-20"></div>
     </div>
   );
 }

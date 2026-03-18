@@ -30,7 +30,7 @@ export default function TermsOfService() {
 
           <h2 className="text-xl font-semibold text-white mt-8 mb-4">3. Limitazione di Responsabilità</h2>
           <p>
-            Avena AI Legal Systems, gli sviluppatori associati, e i provider dei modelli sfruttati declinano ogni responsabilità per eventuali malfunzionamenti, inesattezze (comprese allucinazioni tipiche degli LLMs), o interpretazioni fallaci derivanti dall'uso del sistema, nei limiti massimi consentiti dalla legge applicabile.
+            Avena AI Legal Systems, gli sviluppatori associati, e i provider dei modelli sfruttati declinano ogni responsabilità per eventuali malfunzionamenti, inesattezze (comprese allucinazioni tipiche degli LLMs), o interpretazioni fallaci derivanti dall&apos;uso del sistema, nei limiti massimi consentiti dalla legge applicabile.
           </p>
 
           <h2 className="text-xl font-semibold text-white mt-8 mb-4">4. Obblighi dell&apos;Utente</h2>

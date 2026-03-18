@@ -13,11 +13,11 @@ export default function MaintenanceMode({ progress = 0, totalChunks = 0, current
       initial={{ opacity: 0, scale: 0.95, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className="flex flex-col items-center justify-center min-h-[50vh] w-full max-w-2xl mx-auto text-center p-10 bg-[#050505]/40 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
+      className="flex flex-col items-center justify-center min-h-[50vh] w-full max-w-2xl mx-auto text-center p-10 bg-[#050505]/40 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
     >
       
       {/* Luxury Gradient Glows */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/10 via-amber-500/10 to-indigo-600/10 rounded-3xl blur-2xl"></div>
+      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/10 via-amber-500/10 to-indigo-600/10 rounded-[32px] blur-2xl"></div>
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
       
@@ -51,7 +51,7 @@ export default function MaintenanceMode({ progress = 0, totalChunks = 0, current
 
         {/* Progress Display */}
         {totalChunks > 0 && (
-          <div className="w-full mt-6 flex flex-col gap-3 bg-black/20 p-5 rounded-2xl border border-white/5 backdrop-blur-xl">
+          <div className="w-full mt-6 flex flex-col gap-3 bg-black/20 p-5 rounded-[24px] border border-white/5 backdrop-blur-xl">
             <div className="flex justify-between text-[11px] font-mono text-white/60 uppercase tracking-widest px-1">
               <span>Elaborazione Chunks Vettoriali</span>
               <span className="text-white font-bold">{Math.round(progress)}%</span>
@@ -83,3 +83,4 @@ export default function MaintenanceMode({ progress = 0, totalChunks = 0, current
     </motion.div>
   );
 }
+

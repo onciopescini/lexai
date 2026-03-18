@@ -1,16 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-obsidian-950: #050B14;
-  --color-obsidian-900: #0A1424;
-  --color-obsidian-800: #12213A;
-  --color-obsidian-700: #1C3050;
+  /* Tonalità "Marmo" per sfondi chiari e puliti */
+  --color-marble-50: #FCFCFD;
+  --color-marble-100: #F4F4F5;
+  --color-marble-200: #E4E4E7;
+  --color-marble-300: #D4D4D8;
+  
+  /* Tonalità "Ardesia/Graffite" per testi e contrasti eleganti */
+  --color-slate-700: #3F3F46;
+  --color-slate-800: #27272A;
+  --color-slate-900: #09090B;
 
-  --color-gold-300: #F3E08F;
-  --color-gold-400: #E6C65A;
-  --color-gold-500: #D4AF37;
-  --color-gold-600: #B28F2A;
-  --color-gold-700: #8A6E1D;
+  /* Accento Argento/Platino al posto dell'Oro */
+  --color-platinum-400: #A1A1AA;
+  --color-platinum-500: #71717A;
+  --color-platinum-600: #52525B;
 
   --color-divine-light: #F7E9C8;
 
@@ -86,7 +91,7 @@
     animation: aurora 20s ease infinite;
   }
   .glass-panel {
-    @apply bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:bg-slate-900/60 dark:border-slate-800/50;
+    @apply bg-white/70 backdrop-blur-3xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.02)] dark:bg-slate-900/60 dark:border-slate-800/50;
   }
   .squircle {
     border-radius: 1.5rem; /* Fallback */

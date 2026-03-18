@@ -72,7 +72,7 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
 
         {/* Right Side: Pricing Card */}
         <div className="flex-1 p-10 flex items-center justify-center bg-white">
-          <div className="w-full max-w-sm rounded-3xl border border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.06)] p-8 text-center flex flex-col relative overflow-hidden">
+          <div className="w-full max-w-sm rounded-[32px] border border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.06)] p-8 text-center flex flex-col relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full filter blur-2xl -z-10"></div>
             
             <h3 className="text-xl font-bold text-slate-800 mb-2">Piano Professionale</h3>
@@ -88,7 +88,7 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
             <button
               onClick={handleSubscribe}
               disabled={loading}
-              className="w-full py-4 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-[0_5px_20px_rgba(0,0,0,0.15)] hover:bg-slate-800 hover:shadow-[0_8px_30px_rgba(59,130,246,0.3)] transition-all active:scale-[0.98] flex justify-center items-center"
+              className="w-full py-4 rounded-[24px] bg-slate-900 text-white font-bold text-sm shadow-[0_5px_20px_rgba(0,0,0,0.15)] hover:bg-slate-800 hover:shadow-[0_8px_30px_rgba(59,130,246,0.3)] transition-all active:scale-[0.98] flex justify-center items-center"
             >
               {loading ? (
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -107,3 +107,4 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
     </div>
   );
 }
+

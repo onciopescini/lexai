@@ -203,19 +203,19 @@ export default function WorkspaceLayout({
         return (
           <div className="flex flex-col gap-4 animate-fade-in-up">
             {sources.map((source: LegalSource, sIdx: number) => (
-              <a href={source.source_url} target="_blank" rel="noreferrer" key={sIdx} className="group p-5 rounded-3xl bg-obsidian-800/80 border border-white/5 shadow-sm hover:border-gold-500/30 transition-all flex flex-col gap-3 relative overflow-hidden">
+              <a href={source.source_url} target="_blank" rel="noreferrer" key={sIdx} className="group p-5 rounded-[32px] bg-white border border-marble-200 shadow-sm hover:border-platinum-300 hover:shadow-md transition-all flex flex-col gap-3 relative overflow-hidden">
                 <div className="flex items-center justify-between z-10 mb-1">
-                  <span className="text-[11px] font-bold text-slate-400 truncate flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-slate-500 truncate flex items-center gap-2">
                     {String(source.metadata?.source || 'Documento Legale')}
                   </span>
                 </div>
-                <h4 className="text-base font-playfair font-bold text-slate-100 z-10">{source.title}</h4>
-                <p className="text-sm text-slate-400 line-clamp-4 leading-relaxed font-light z-10">{source.content}</p>
-                <div className="mt-2 flex items-center justify-between z-10 w-full bg-obsidian-950/50 p-3 rounded-2xl border border-white/5">
-                  <div className="w-1/2 h-2 bg-obsidian-700 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${source.similarity >= 0.1 ? 'bg-gold-500' : 'bg-gold-600'}`} style={{ width: `${Math.round(source.similarity * 100)}%`}}></div>
+                <h4 className="text-base font-playfair font-bold text-slate-800 z-10">{source.title}</h4>
+                <p className="text-sm text-slate-600 line-clamp-4 leading-relaxed font-light z-10">{source.content}</p>
+                <div className="mt-2 flex items-center justify-between z-10 w-full bg-marble-50 p-3 rounded-[24px] border border-marble-200">
+                  <div className="w-1/2 h-2 bg-marble-200 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${source.similarity >= 0.1 ? 'bg-slate-700' : 'bg-slate-500'}`} style={{ width: `${Math.round(source.similarity * 100)}%`}}></div>
                   </div>
-                  <span className="text-[10px] font-black uppercase text-gold-400">Rilevanza {Math.round(source.similarity * 100)}%</span>
+                  <span className="text-[10px] font-black uppercase text-slate-700">Rilevanza {Math.round(source.similarity * 100)}%</span>
                 </div>
               </a>
             ))}
@@ -224,7 +224,7 @@ export default function WorkspaceLayout({
       case 'mindmap':
         const mindmapData = activeArtifact.data as { nodes: Record<string, unknown>[], edges: Record<string, unknown>[] };
         return (
-          <div className="w-full h-[600px] bg-obsidian-900/50 rounded-3xl overflow-hidden border border-white/5 relative">
+          <div className="w-full h-[600px] bg-marble-50/50 rounded-[32px] overflow-hidden border border-marble-200 relative">
             <MindMapViewer 
               initialNodes={mindmapData.nodes} 
               initialEdges={mindmapData.edges} 
@@ -234,7 +234,7 @@ export default function WorkspaceLayout({
       case 'illustration':
         return (
           <div className="flex flex-col gap-4 animate-fade-in-up">
-            <div className="w-full relative h-[400px] rounded-3xl overflow-hidden border border-purple-500/20 shadow-2xl">
+            <div className="w-full relative h-[400px] rounded-[32px] overflow-hidden border border-purple-500/20 shadow-xl">
               <Image 
                 src={`data:image/jpeg;base64,${activeArtifact.data as string}`} 
                 alt="Visual Legal Intelligence" 
@@ -242,14 +242,14 @@ export default function WorkspaceLayout({
                 className="object-cover"
               />
             </div>
-            <p className="text-sm text-slate-400 text-center font-light">
+            <p className="text-sm text-slate-500 text-center font-light">
               Generazione Visiva Contestuale basata sul ragionamento giuridico in corso.
             </p>
           </div>
         );
       case 'contra_analysis':
          return (
-            <div className="p-6 rounded-3xl bg-amber-950/20 border border-amber-500/20 shadow-inner overflow-y-auto max-h-[80vh] custom-scrollbar animate-fade-in-up">
+            <div className="p-6 rounded-[32px] bg-amber-50 border border-amber-200 shadow-inner overflow-y-auto max-h-[80vh] custom-scrollbar animate-fade-in-up text-slate-800">
                <MarkdownRenderer content={activeArtifact.data as string} />
             </div>
          );
@@ -268,15 +268,15 @@ export default function WorkspaceLayout({
     <div className="flex flex-col lg:flex-row w-full h-[calc(100vh-80px)] overflow-hidden bg-transparent">
       
       {/* LEFT PANEL: CHAT INTERFACE */}
-      <div className={`flex flex-col h-full bg-obsidian-950 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] relative z-10 
-          ${activeArtifact ? 'w-full lg:w-1/2 border-r border-white/5 opacity-40 lg:opacity-100' : 'w-full'}
+      <div className={`flex flex-col h-full bg-marble-50 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] relative z-10 
+          ${activeArtifact ? 'w-full lg:w-1/2 border-r border-marble-200 opacity-40 lg:opacity-100' : 'w-full'}
       `}>
          
          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-6 pb-40">
             {messages.length === 0 ? (
                <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
-                 <Image src="/atena-goddess-logo.png" alt="Atena" width={120} height={120} className="mix-blend-screen opacity-50 mb-6 drop-shadow-2xl" />
-                 <h2 className="text-2xl font-playfair font-black text-slate-300 mb-2">Workspace Giuridico Attivo</h2>
+                 <Image src="/atena-logo-new.jpeg" alt="Atena" width={120} height={120} className="mix-blend-multiply opacity-50 mb-6 drop-shadow-xl" style={{ width: 'auto', height: 'auto' }} />
+                 <h2 className="text-2xl font-playfair font-black text-slate-700 mb-2">Workspace Giuridico Attivo</h2>
                  <p className="text-sm text-slate-500">Inizia a digitare o carica un PDF per sbloccare la sintesi generativa di Atena.</p>
                </div>
             ) : (
@@ -284,43 +284,43 @@ export default function WorkspaceLayout({
                  {messages.map((message, idx) => (
                    <div key={idx} className={`flex w-full ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
                      {message.role === 'user' ? (
-                       <div className="max-w-[85%] p-5 rounded-[24px] rounded-tr-[8px] bg-slate-900/80 backdrop-blur-xl text-white shadow-xl border border-white/10">
-                         <p className="text-white/95 text-base font-medium leading-relaxed">{message.content}</p>
+                       <div className="max-w-[85%] p-5 rounded-[24px] rounded-tr-[8px] bg-white backdrop-blur-xl text-slate-800 shadow-md border border-marble-200">
+                         <p className="text-slate-800 text-base font-medium leading-relaxed">{message.content}</p>
                        </div>
                      ) : (
                        <div className="w-full flex flex-col gap-4">
                          
                          {/* Assistente Response */}
-                         <div className="p-6 md:p-8 rounded-[32px] rounded-tl-[8px] relative bg-obsidian-900/60 backdrop-blur-2xl border border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+                         <div className="p-6 md:p-8 rounded-[32px] rounded-tl-[8px] relative bg-white/80 backdrop-blur-2xl border border-marble-200 shadow-[0_8px_32px_rgba(0,0,0,0.05)] text-slate-800">
                            <div className="flex items-center gap-3 mb-5">
-                             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-obsidian-800 to-obsidian-950 border border-gold-500/30 flex items-center justify-center shadow-md">
-                               <Sparkles className="w-3.5 h-3.5 text-gold-400" />
+                             <div className="w-7 h-7 rounded-[20px] bg-gradient-to-br from-white to-marble-100 border border-marble-200 flex items-center justify-center shadow-sm">
+                               <Sparkles className="w-3.5 h-3.5 text-slate-700" />
                              </div>
-                             <h3 className="text-xs font-playfair font-bold text-slate-300 tracking-widest uppercase">Atena Synthesis</h3>
+                             <h3 className="text-xs font-playfair font-bold text-slate-500 tracking-widest uppercase">Atena Synthesis</h3>
                            </div>
                            <div className="prose-sm">
                              <MarkdownRenderer content={message.content} />
                            </div>
 
                            {/* Smart Interactive Pills (Triggers Canvas) */}
-                           <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-white/5">
+                           <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-marble-200">
                               {message.sources && message.sources.length > 0 && (
-                                <button onClick={() => setActiveArtifact({ type: 'sources', title: 'Fonti Normative', data: message.sources, messageIndex: idx })} className="px-3 py-1.5 rounded-lg bg-obsidian-800 border border-white/10 hover:border-gold-500/30 text-xs text-slate-300 flex items-center gap-1.5 transition-all">
-                                  <Layers className="w-3.5 h-3.5 text-gold-400" /> Fonti ({message.sources.length})
+                                <button onClick={() => setActiveArtifact({ type: 'sources', title: 'Fonti Normative', data: message.sources, messageIndex: idx })} className="px-3 py-1.5 rounded-[20px] bg-white border border-marble-200 hover:border-platinum-300 text-xs text-slate-600 flex items-center gap-1.5 transition-all shadow-sm">
+                                  <Layers className="w-3.5 h-3.5 text-slate-700" /> Fonti ({message.sources.length})
                                 </button>
                               )}
                               {message.contra_analysis && (
-                                <button onClick={() => setActiveArtifact({ type: 'contra_analysis', title: 'Protocollo Decimo Uomo', data: message.contra_analysis, messageIndex: idx })} className="px-3 py-1.5 rounded-lg bg-amber-950/30 border border-amber-500/20 hover:bg-amber-900/40 text-xs text-amber-500 flex items-center gap-1.5 transition-all">
+                                <button onClick={() => setActiveArtifact({ type: 'contra_analysis', title: 'Protocollo Decimo Uomo', data: message.contra_analysis, messageIndex: idx })} className="px-3 py-1.5 rounded-[20px] bg-slate-50 border border-slate-200 hover:bg-slate-100 text-xs text-slate-700 flex items-center gap-1.5 transition-all shadow-sm">
                                   <GitCompare className="w-3.5 h-3.5" /> Decimo Uomo
                                 </button>
                               )}
                               {message.fact_check && (
-                                <button onClick={() => setActiveArtifact({ type: 'factcheck', title: 'Fact Check Report', data: message.fact_check, messageIndex: idx })} className="px-3 py-1.5 rounded-lg bg-emerald-950/30 border border-emerald-500/20 hover:bg-emerald-900/40 text-xs text-emerald-500 flex items-center gap-1.5 transition-all">
+                                <button onClick={() => setActiveArtifact({ type: 'factcheck', title: 'Fact Check Report', data: message.fact_check, messageIndex: idx })} className="px-3 py-1.5 rounded-[20px] bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-xs text-emerald-700 flex items-center gap-1.5 transition-all shadow-sm">
                                   <FileText className="w-3.5 h-3.5" /> Affidabilità: {Math.round(message.fact_check.overall_score)}/100
                                 </button>
                               )}
                               {message.legal_illustration && (
-                                <button onClick={() => setActiveArtifact({ type: 'illustration', title: 'Generazione Visiva', data: message.legal_illustration, messageIndex: idx })} className="px-3 py-1.5 rounded-lg bg-purple-950/30 border border-purple-500/20 hover:bg-purple-900/40 text-xs text-purple-400 flex items-center gap-1.5 transition-all">
+                                <button onClick={() => setActiveArtifact({ type: 'illustration', title: 'Generazione Visiva', data: message.legal_illustration, messageIndex: idx })} className="px-3 py-1.5 rounded-[20px] bg-purple-50 border border-purple-200 hover:bg-purple-100 text-xs text-purple-700 flex items-center gap-1.5 transition-all shadow-sm">
                                   <Sparkles className="w-3.5 h-3.5" /> Visual Intelligence
                                 </button>
                               )}
@@ -342,46 +342,46 @@ export default function WorkspaceLayout({
          </div>
 
          {/* OMNIBAR INPUT (Floating at bottom of left panel) */}
-         <div className={`absolute bottom-0 left-0 w-full bg-gradient-to-t from-obsidian-950 via-obsidian-950/90 to-transparent pt-10 pb-6 px-4 z-40 transition-all duration-700`}>
+         <div className={`absolute bottom-0 left-0 w-full bg-gradient-to-t from-marble-50 via-marble-50/90 to-transparent pt-10 pb-6 px-4 z-40 transition-all duration-700`}>
             <div className={`w-full mx-auto flex flex-col gap-3 transition-all duration-700 ${activeArtifact ? 'max-w-full' : 'max-w-3xl'}`}>
                <div className="flex w-full overflow-x-auto no-scrollbar gap-2 pb-1">
                  {['Tutte le Fonti', 'Costituzione Italiana', 'Codice Civile Italiano', 'Codice Penale', 'EUR-Lex'].map((source) => (
                    <button
                      key={source}
                      onClick={() => setSourceFilter(source)}
-                     className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all whitespace-nowrap border ${
+                     className={`px-3 py-1.5 rounded-[24px] text-[11px] font-semibold transition-all whitespace-nowrap border ${
                        sourceFilter === source 
-                         ? 'bg-gold-500/10 text-gold-400 border-gold-500/30 shadow-[0_0_10px_rgba(212,175,55,0.1)]' 
-                         : 'bg-obsidian-900/60 text-slate-500 border-white/5 hover:text-slate-300'
+                         ? 'bg-white text-slate-800 border-platinum-300 shadow-sm scale-105' 
+                         : 'bg-white/80 text-slate-500 border-marble-200 hover:text-slate-700 shadow-sm'
                      }`}
                    >
                      {source.replace(' Italiano', '').replace(' Italiana', '')}
                    </button>
                  ))}
-                 <button onClick={() => setDraftingMode(!draftingMode)} className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all whitespace-nowrap border ${ draftingMode ? 'bg-gold-500 text-obsidian-950 border-gold-400 shadow-md' : 'bg-obsidian-900/60 text-slate-500 border-white/5 hover:text-slate-300' }`}>
+                 <button onClick={() => setDraftingMode(!draftingMode)} className={`px-3 py-1.5 rounded-[24px] text-[11px] font-bold transition-all whitespace-nowrap border shadow-sm ${ draftingMode ? 'bg-white text-slate-800 border-platinum-300 shadow-sm scale-105' : 'bg-white/80 text-slate-500 border-marble-200 hover:text-slate-700' }`}>
                    Drafting: {draftingMode ? 'ON' : 'OFF'}
                  </button>
                  {messages.length > 0 && (
-                   <button onClick={handleGenerateMindMap} className="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all whitespace-nowrap bg-obsidian-800 text-gold-400 border border-gold-500/20 hover:bg-gold-500/10 flex items-center gap-1">
+                   <button onClick={handleGenerateMindMap} className="px-3 py-1.5 rounded-[24px] text-[11px] font-bold transition-all whitespace-nowrap bg-white text-slate-700 border border-marble-200 hover:bg-marble-50 shadow-sm flex items-center gap-1">
                      <Layers className="w-3 h-3" /> Mappa
                    </button>
                  )}
                </div>
 
-               <form onSubmit={handleSearch} className="relative flex items-center bg-obsidian-900/80 backdrop-blur-2xl border border-white/10 rounded-[24px] p-2 shadow-2xl focus-within:border-gold-500/40 transition-all">
+               <form onSubmit={handleSearch} className="relative flex items-center bg-white/90 backdrop-blur-2xl border border-marble-200 rounded-[24px] p-2 shadow-lg focus-within:border-platinum-300 transition-all">
                   <input
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Interroga la Dea o esplora la giurisprudenza..."
-                    className="w-full bg-transparent border-none text-base text-slate-100 placeholder-slate-500 focus:ring-0 px-4 py-3 outline-none"
+                    className="w-full bg-transparent border-none text-base text-slate-800 placeholder-slate-400 focus:ring-0 px-4 py-3 outline-none"
                     disabled={loading}
                   />
                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="application/pdf" className="hidden" />
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-slate-400 hover:text-gold-400 transition-colors" disabled={loading}>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-slate-400 hover:text-slate-600 transition-colors" disabled={loading}>
                     <FileText className="w-5 h-5" />
                   </button>
-                  <button type="submit" disabled={loading || !query.trim()} className="p-3 ml-1 bg-gold-500 text-obsidian-950 rounded-[16px] hover:bg-gold-400 transition-all disabled:opacity-40 flex items-center justify-center">
+                  <button type="submit" disabled={loading || !query.trim()} className="p-3 ml-1 bg-slate-900 text-white rounded-[20px] hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:hover:translate-y-0 flex items-center justify-center shadow-md">
                     <Search className="w-5 h-5" strokeWidth={3} />
                   </button>
                </form>
@@ -391,18 +391,18 @@ export default function WorkspaceLayout({
 
       {/* RIGHT PANEL: GENERATIVE CANVAS (STITCH 2.0 STYLE) */}
       <div 
-         className={`h-full absolute lg:relative right-0 top-0 bg-obsidian-950/30 lg:bg-transparent backdrop-blur-3xl lg:backdrop-blur-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-y-auto custom-scrollbar z-50 lg:z-auto
+         className={`h-full absolute lg:relative right-0 top-0 bg-marble-50/90 lg:bg-transparent backdrop-blur-3xl lg:backdrop-blur-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-y-auto custom-scrollbar z-50 lg:z-auto
             ${activeArtifact ? 'w-full lg:w-1/2 opacity-100 translate-x-0' : 'w-full lg:w-0 opacity-0 translate-x-full lg:translate-x-10 pointer-events-none'}
          `}
       >
          {activeArtifact && (
             <div className="absolute inset-0 p-6 flex flex-col pt-10">
-               <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5 sticky top-0 bg-obsidian-950/80 backdrop-blur-md z-10">
-                  <h2 className="text-xl font-playfair font-black text-slate-100 flex items-center gap-3">
-                     <Sparkles className="w-5 h-5 text-gold-400" />
+               <div className="flex items-center justify-between mb-8 pb-4 border-b border-marble-200 sticky top-0 bg-marble-50/90 backdrop-blur-md z-10">
+                  <h2 className="text-xl font-playfair font-black text-slate-800 flex items-center gap-3">
+                     <Sparkles className="w-5 h-5 text-slate-700" />
                      {activeArtifact.title}
                   </h2>
-                  <button onClick={() => setActiveArtifact(null)} className="p-2 rounded-xl bg-obsidian-800 text-slate-400 hover:text-white transition-colors">
+                  <button onClick={() => setActiveArtifact(null)} className="p-2 rounded-[24px] bg-white border border-marble-200 text-slate-500 hover:text-slate-800 shadow-sm transition-colors">
                      <X className="w-5 h-5" />
                   </button>
                </div>
@@ -411,10 +411,10 @@ export default function WorkspaceLayout({
                   {renderCanvasContent()}
                </div>
                
-               <div className="mt-8 pt-6 border-t border-white/5 flex justify-between items-center text-xs text-slate-500">
+               <div className="mt-8 pt-6 border-t border-marble-200 flex justify-between items-center text-xs text-slate-500">
                   <span>Generato contestualmente da Atena AI</span>
-                  <div className="flex gap-4 border border-white/5 rounded-lg px-3 py-1.5 bg-obsidian-900/50">
-                     <Share2 className="w-4 h-4 hover:text-gold-400 cursor-pointer transition-colors" />
+                  <div className="flex gap-4 border border-marble-200 rounded-[20px] px-3 py-1.5 bg-white shadow-sm">
+                     <Share2 className="w-4 h-4 hover:text-slate-800 cursor-pointer transition-colors" />
                   </div>
                </div>
             </div>
@@ -424,3 +424,5 @@ export default function WorkspaceLayout({
     </div>
   );
 }
+
+

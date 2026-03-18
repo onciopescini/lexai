@@ -27,7 +27,7 @@ export default function GoogleDocCard({ url, title }: GoogleDocCardProps) {
 
         <div className="relative z-10 flex items-center gap-5">
           {/* Google Docs Icon */}
-          <div className="shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-500">
+          <div className="shrink-0 w-14 h-14 rounded-[24px] bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-500">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
               <rect x="4" y="2" width="16" height="20" rx="2" fill="#4285F4" />
               <rect x="4" y="2" width="16" height="20" rx="2" fill="url(#docGrad)" />
@@ -68,7 +68,7 @@ export default function GoogleDocCard({ url, title }: GoogleDocCardProps) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 px-5 py-3 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-md hover:bg-blue-600 hover:shadow-blue-500/25 transition-all duration-300 flex items-center gap-2 hover:-translate-y-0.5 active:translate-y-0"
+            className="shrink-0 px-5 py-3 bg-slate-900 text-white text-xs font-bold rounded-[24px] shadow-md hover:bg-blue-600 hover:shadow-blue-500/25 transition-all duration-300 flex items-center gap-2 hover:-translate-y-0.5 active:translate-y-0"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -80,3 +80,4 @@ export default function GoogleDocCard({ url, title }: GoogleDocCardProps) {
     </div>
   );
 }
+

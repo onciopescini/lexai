@@ -6,11 +6,11 @@ import { Float, Points, PointMaterial, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
-// Premium Law Firm x Silicon Valley Color Palette:
-// Deep Blues & Elegant Gold/Amber
-const PRIMARY_COLOR = "#0f4c81"; // Classic Blue
-const ACCENT_COLOR = "#d4af37"; // Metallic Gold
-const SECONDARY_COLOR = "#3b82f6"; // Tech Blue
+// Premium Minimalist Canvas Palette:
+// Sleek Platinum & Silver
+const PRIMARY_COLOR = "#A1A1AA"; // Platinum 400
+const ACCENT_COLOR = "#71717A"; // Platinum 500
+const SECONDARY_COLOR = "#D4D4D8"; // Marble 300
 
 function CameraRig() {
   const vec = new THREE.Vector3();
@@ -73,9 +73,9 @@ export default function NetworkBackground() {
           <ambientLight intensity={0.2} />
           
           <Float speed={1.2} rotationIntensity={0.5} floatIntensity={1}>
-            {/* Inner dense tech core */}
+            {/* Inner dense core */}
             <ParticleSwarm count={4000} color={SECONDARY_COLOR} radiusMultiplier={0.8} />
-            {/* Outer sparse majestic gold halo */}
+            {/* Outer sparse majestic platinum halo */}
             <ParticleSwarm count={1500} color={ACCENT_COLOR} radiusMultiplier={1.5} />
             {/* Background distant stars */}
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />

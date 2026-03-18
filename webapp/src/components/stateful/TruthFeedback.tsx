@@ -81,7 +81,7 @@ export default function TruthFeedback({ queryText, assistantResponse }: TruthFee
           <button
             onClick={handleThumbsUp}
             disabled={isSubmitting}
-            className={`p-2 rounded-lg flex items-center gap-1.5 transition-all
+            className={`p-2 rounded-[20px] flex items-center gap-1.5 transition-all
               ${feedbackState === 'up' 
                   ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm' 
                   : 'bg-white text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 border border-transparent'}
@@ -97,7 +97,7 @@ export default function TruthFeedback({ queryText, assistantResponse }: TruthFee
           <button
             onClick={handleThumbsDown}
             disabled={isSubmitting}
-            className={`p-2 rounded-lg flex items-center gap-1.5 transition-all
+            className={`p-2 rounded-[20px] flex items-center gap-1.5 transition-all
               ${feedbackState === 'down' 
                   ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-sm' 
                   : 'bg-white text-slate-400 hover:text-rose-500 hover:bg-rose-50 border border-transparent'}
@@ -118,12 +118,12 @@ export default function TruthFeedback({ queryText, assistantResponse }: TruthFee
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Quale legge ho sbagliato? Aiutami a migliorare..." 
-            className="flex-1 text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-300 text-slate-700"
+            className="flex-1 text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-[20px] focus:outline-none focus:ring-1 focus:ring-rose-300 text-slate-700"
           />
           <button 
             onClick={handleSubmitDown}
             disabled={!noteText.trim() || isSubmitting}
-            className="px-3 py-2 text-xs font-bold bg-slate-800 text-white rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-[24px] hover:bg-rose-600 shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
           >
             Invia
           </button>
@@ -132,3 +132,4 @@ export default function TruthFeedback({ queryText, assistantResponse }: TruthFee
     </div>
   );
 }
+
