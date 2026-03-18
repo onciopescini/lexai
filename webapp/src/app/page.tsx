@@ -116,12 +116,18 @@ export default function AtenaApp() {
           
           {user ? (
             <div className="flex items-center gap-4 ml-2">
-              <button 
-                onClick={() => setShowSubscriptionModal(true)}
-                className="text-xs font-black text-white bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-600 hover:to-slate-800 px-4 py-2 rounded-[14px] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-105 active:scale-95"
-              >
-                Passa a Premium ✨
-              </button>
+              {user.user_metadata?.is_premium ? (
+                <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-[14px]">
+                  PREMIUM ✨
+                </span>
+              ) : (
+                <button 
+                  onClick={() => setShowSubscriptionModal(true)}
+                  className="text-xs font-black text-white bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-600 hover:to-slate-800 px-4 py-2 rounded-[14px] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-105 active:scale-95"
+                >
+                  Passa a Premium ✨
+                </button>
+              )}
               <div className="flex items-center gap-3 pl-4 border-l border-marble-200">
                  <div className="flex flex-col items-end">
                     <span className="text-xs text-slate-800 uppercase tracking-wider">{user.email?.split('@')[0]}</span>
