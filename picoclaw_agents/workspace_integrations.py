@@ -38,8 +38,8 @@ def get_google_credentials():
             flow = InstalledAppFlow.from_client_secrets_file(
                 "credentials.json", SCOPES
             )
-            # Use run_local_server for desktop auth flow
-            creds = flow.run_local_server(port=0)
+            # Use run_local_server for desktop auth flow (usiamo 8080 come nello script di setup)
+            creds = flow.run_local_server(port=8080)
             
         # Save the credentials for the next run
         with open("token.json", "w") as token:
@@ -84,11 +84,35 @@ def create_google_doc(title: str, content: str) -> str:
         print(f"Errore in create_google_doc: {e}")
         return f"Errore interno: {e}"
 
+def create_google_drive_folder(folder_name: str) -> str:
+    """Creates a Google Drive folder and returns its URL/ID."""
+    try:
+        creds = get_google_credentials()
+        drive_service = build("drive", "v3", credentials=creds)
+        
+        file_metadata = {
+            'name': folder_name,
+            'mimeType': 'application/vnd.google-apps.folder'
+        }
+        
+        folder = drive_service.files().create(body=file_metadata, fields='id').execute()
+        folder_id = folder.get('id')
+        folder_url = f"https://drive.google.com/drive/folders/{folder_id}"
+        print(f"[*] Creata cartella Google Drive: {folder_url}")
+        return folder_url
+        
+    except HttpError as err:
+        print(f"Si è verificato un errore HTTP con Google Drive API: {err}")
+        return f"Errore API Google Drive: {err}"
+    except Exception as e:
+        print(f"Errore in create_google_drive_folder: {e}")
+        return f"Errore interno: {e}"
+
 if __name__ == "__main__":
     # Test esecuzione diretta per forzare il login OAuth la prima volta
     print("Inizializzo l'autenticazione Google Workspace...")
     try:
         creds = get_google_credentials()
-        print("✅ Autenticazione completata con successo. Il token.json è stato generato.")
+        print("Autenticazione completata con successo. Il token.json è stato generato.")
     except Exception as e:
-        print(f"❌ Errore: {e}")
+        print(f"Errore: {e}")

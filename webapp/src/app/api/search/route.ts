@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { getEmbeddings, generateLegalIllustration, factCheckResponse, FactCheckReport } from '@/lib/gemini';
 import { rerankDocuments } from '@/lib/groq';
 import { RouterAgent } from '@/lib/agents/RouterAgent';
@@ -19,6 +20,13 @@ const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
+
+  // Lazy cleanup to prevent memory leak on long-running lambdas
+  if (Math.random() < 0.05) {
+    for (const [key, val] of rateLimitMap.entries()) {
+      if (now > val.resetTime) rateLimitMap.delete(key);
+    }
+  }
   const record = rateLimitMap.get(ip);
   
   if (!record || now > record.resetTime) {
@@ -45,10 +53,36 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Troppe richieste. Riprova tra un minuto.' }, { status: 429 });
     }
 
-    const { query, sourceFilter, history, draftingMode } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Payload JSON non valido' }, { status: 400 });
+    }
 
-    if (!query) {
-      return NextResponse.json({ error: 'Nessuna query fornita' }, { status: 400 });
+    const { query, sourceFilter, history, draftingMode } = body;
+
+    // Strict Input Validation
+    if (!query || typeof query !== 'string' || query.trim().length === 0) {
+      return NextResponse.json({ error: 'Nessuna query fornita o formato non valido' }, { status: 400 });
+    }
+    if (query.length > 2000) {
+      return NextResponse.json({ error: 'Query troppo lunga (max 2000 caratteri)' }, { status: 400 });
+    }
+
+    // --- AUTHENTICATION & QUOTA ENFORCEMENT ---
+    const supabaseAuth = await createClient();
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'AUTHENTICATION_REQUIRED', message: 'Accedi o registrati per utilizzare Atena.' }, { status: 401 });
+    }
+
+    const isPremium = user.user_metadata?.is_premium === true;
+    const freeQueriesUsed = user.user_metadata?.free_queries_used || 0;
+
+    if (!isPremium && freeQueriesUsed >= 10) {
+      return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: 'Hai esaurito le 10 domande gratuite. Esegui l\'upgrade a Premium per sbloccare l\'oracolo senza limiti.' }, { status: 403 });
     }
 
     // --- PHASE 7: Log della query utente per il Trend Analyzer (Citizen Guardian) ---
@@ -85,6 +119,9 @@ export async function POST(req: Request) {
     const effectiveDraftingMode = draftingMode || intent === 'drafting';
     if (effectiveDraftingMode) {
       console.log(`[*] Modalità Drafting (Redazione) attivata dal Router o dall'Utente.`);
+      if (!isPremium) {
+        return NextResponse.json({ error: 'PREMIUM_REQUIRED', message: 'Il Drafting Avanzato di testi giuridici è una funzione esclusiva di Atena Premium.' }, { status: 403 });
+      }
     }
 
     const embedding = await getEmbeddings(query);
@@ -247,9 +284,19 @@ export async function POST(req: Request) {
 
     const legalIllustration = await legalIllustrationPromise;
 
-    // Salvataggio della sessione in DB
+    // Salvataggio della sessione in DB e Aggiornamento Quote Free
+    if (!isPremium) {
+      await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...user.user_metadata,
+          free_queries_used: freeQueriesUsed + 1
+        }
+      });
+      console.log(`[*] Quota Free aggiornata per l'utente ${user.id}: ${freeQueriesUsed + 1}/10`);
+    }
+
     supabaseAdmin.from('chat_sessions').insert([{ 
-      session_id: 'default_user', 
+      session_id: user.id || 'default_user', 
       user_query: query, 
       ai_response: baseThesis 
     }]).then(({ error: sessionError }) => {
@@ -278,7 +325,7 @@ export async function POST(req: Request) {
 
   } catch (error: unknown) {
     console.error('API Error:', error);
-    const errMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Internal Server Error', details: errMessage }, { status: 500 });
+    // Non ritorniamo mai il dettaglio dell'errore (errMessage) al client per sicurezza
+    return NextResponse.json({ error: 'Internal Server Error. Si è verificato un problema tecnico.' }, { status: 500 });
   }
 }

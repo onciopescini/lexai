@@ -55,6 +55,10 @@ export default function WorkspaceLayout({
   const [draftingMode, setDraftingMode] = useState(false);
   const [loading, setLoading] = useState(false);
   
+  const isPremium = user?.user_metadata?.is_premium === true;
+  const [freeQueriesUsed, setFreeQueriesUsed] = useState<number>(user?.user_metadata?.free_queries_used || 0);
+  const freeQueriesLeft = Math.max(0, 10 - freeQueriesUsed);
+
   // Canvas State (Stitch 2.0 Paradigm)
   const [activeArtifact, setActiveArtifact] = useState<ActiveArtifact | null>(null);
 
@@ -117,6 +121,7 @@ export default function WorkspaceLayout({
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return onRequireAuth();
+    if (!isPremium && freeQueriesLeft <= 0) return onRequirePro();
     if (!query.trim()) return;
 
     const userQuery = query;
@@ -142,8 +147,14 @@ export default function WorkspaceLayout({
       const data = await res.json();
       
       if (data.error) {
-         setMessages(prev => [...prev, { role: 'assistant', content: `[Errore di Sistema]: ${data.error}` }]);
+         if (data.error === 'QUOTA_EXCEEDED' || data.error === 'PREMIUM_REQUIRED') {
+            onRequirePro();
+            setMessages(prev => prev.slice(0, -1)); // Rimuovi il messaggio utente visto che è stato bloccato
+         } else {
+            setMessages(prev => [...prev, { role: 'assistant', content: `[Errore di Sistema]: ${data.error}` }]);
+         }
       } else {
+         if (!isPremium) setFreeQueriesUsed(prev => prev + 1);
          setMessages(prev => [...prev, { 
            role: 'assistant', 
            content: data.response, 
@@ -348,7 +359,7 @@ export default function WorkspaceLayout({
          {/* OMNIBAR INPUT (Floating at bottom of left panel) */}
          <div className={`absolute bottom-0 left-0 w-full bg-gradient-to-t from-marble-50 via-marble-50/90 to-transparent pt-10 pb-6 px-4 z-40 transition-all duration-700`}>
             <div className={`w-full mx-auto flex flex-col gap-3 transition-all duration-700 ${activeArtifact ? 'max-w-full' : 'max-w-3xl'}`}>
-               <div className="flex w-full overflow-x-auto no-scrollbar gap-2 pb-1">
+               <div className="flex w-full overflow-x-auto no-scrollbar gap-2 pb-1 items-center">
                  {['Tutte le Fonti', 'Costituzione Italiana', 'Codice Civile Italiano', 'Codice Penale', 'EUR-Lex'].map((source) => (
                    <button
                      key={source}
@@ -362,13 +373,23 @@ export default function WorkspaceLayout({
                      {source.replace(' Italiano', '').replace(' Italiana', '')}
                    </button>
                  ))}
-                 <button onClick={() => setDraftingMode(!draftingMode)} className={`px-3 py-1.5 rounded-[24px] text-[11px] font-bold transition-all whitespace-nowrap border shadow-sm ${ draftingMode ? 'bg-white text-slate-800 border-platinum-300 shadow-sm scale-105' : 'bg-white/80 text-slate-500 border-marble-200 hover:text-slate-700' }`}>
+                 <button onClick={() => {
+                   if (!isPremium) return onRequirePro();
+                   setDraftingMode(!draftingMode);
+                 }} className={`px-3 py-1.5 rounded-[24px] text-[11px] font-bold transition-all whitespace-nowrap border shadow-sm ${ draftingMode ? 'bg-white text-slate-800 border-platinum-300 shadow-sm scale-105' : 'bg-white/80 text-slate-500 border-marble-200 hover:text-slate-700' }`}>
                    Drafting: {draftingMode ? 'ON' : 'OFF'}
                  </button>
                  {messages.length > 0 && (
                    <button onClick={handleGenerateMindMap} className="px-3 py-1.5 rounded-[24px] text-[11px] font-bold transition-all whitespace-nowrap bg-white text-slate-700 border border-marble-200 hover:bg-marble-50 shadow-sm flex items-center gap-1">
                      <Layers className="w-3 h-3" /> Mappa
                    </button>
+                 )}
+                 
+                 {!isPremium && (
+                   <div className="ml-auto px-3 py-1.5 rounded-[24px] bg-white text-[10px] font-bold text-slate-500 flex items-center gap-1.5 border border-marble-200 shadow-sm whitespace-nowrap hidden sm:flex">
+                     <div className={`w-1.5 h-1.5 rounded-full ${freeQueriesLeft > 0 ? 'bg-emerald-400' : 'bg-rose-500'} ${freeQueriesLeft > 0 ? 'animate-pulse' : ''} shadow-sm`}></div>
+                     {freeQueriesLeft} / 10 Free
+                   </div>
                  )}
                </div>
 

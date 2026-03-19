@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 const supabase = createClient();
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer';
-import Image from 'next/image';
-import Link from 'next/link';
+import PremiumEcosystemWrapper from '@/components/premium/PremiumEcosystemWrapper';
 
 interface Lesson {
   id: string;
@@ -40,17 +39,7 @@ export default function CivicLessonsDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#fbfbfd] text-slate-900 font-sans selection:bg-blue-500/20">
-      {/* Navbar Minimal */}
-      <nav className="w-full flex items-center justify-between p-6 max-w-6xl mx-auto border-b border-black/5 bg-[#fbfbfd]/70 backdrop-blur-xl sticky top-0 z-50">
-        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm" priority style={{ width: 'auto', height: 'auto' }} />
-        </Link>
-        <div className="flex items-center gap-7 text-sm font-bold text-slate-500">
-          <Link href="/" className="hover:text-slate-900 transition-colors">Torna all&apos;Assistente</Link>
-        </div>
-      </nav>
-
+    <PremiumEcosystemWrapper>
       {/* Header */}
       <header className="w-full text-center py-20 px-4 relative overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
@@ -163,7 +152,7 @@ export default function CivicLessonsDashboard() {
           </div>
         )}
       </main>
-    </div>
+    </PremiumEcosystemWrapper>
   );
 }
 

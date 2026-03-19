@@ -77,7 +77,7 @@ test.describe("🛡️ Atena Security Tests", () => {
 
       // Should not expose sensitive server info
       expect(headers["x-powered-by"]).toBeUndefined();
-      expect(headers["server"]).not.toContain("Express");
+      expect(headers["server"] || "").not.toContain("Express");
     });
   });
 

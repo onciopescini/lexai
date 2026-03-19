@@ -33,15 +33,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Definizione delle rotte pubbliche per il marketing e i disclaimers legali
+  const isPublicRoute = 
+    request.nextUrl.pathname === '/' ||
+    request.nextUrl.pathname === '/login' ||
+    request.nextUrl.pathname.startsWith('/legal/');
+  
   if (
     !user &&
-    typeof request.nextUrl.pathname === 'string' &&
-    request.nextUrl.pathname !== '/login' &&
-    !request.nextUrl.pathname.startsWith('/api') &&
-    request.nextUrl.pathname !== '/'
+    !isPublicRoute &&
+    !request.nextUrl.pathname.startsWith('/api')
   ) {
-    // If no user is logged in, you can redirect them to the login page
-    // For now we allow them on '/' but might block specific features in page.tsx
+    // Se un utenete non autenticato cerca di accedere a rotte protette (Premium Ecosystem o Workspace),
+    // reindirizzalo alla homepage (Auth Modal).
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)

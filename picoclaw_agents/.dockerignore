@@ -21,6 +21,7 @@ credentials.json
 # Logs & Output
 *.log
 *.txt
+!requirements.txt
 error.log
 out.txt
 out2.txt

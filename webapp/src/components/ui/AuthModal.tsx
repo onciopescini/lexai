@@ -15,13 +15,21 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const supabase = createClient();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    // Blocco legale in fase di registrazione
+    if (!isLogin && !acceptedTerms) {
+      setError("È obbligatorio accettare i Termini di Servizio e la Privacy Policy per registrarsi.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       if (isLogin) {
@@ -59,8 +67,12 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
 
   const handleGoogleAuth = async () => {
     try {
-      setLoading(true);
       setError(null);
+      if (!isLogin && !acceptedTerms) {
+        setError("È obbligatorio accettare i Termini di Servizio e la Privacy Policy per registrarsi.");
+        return;
+      }
+      setLoading(true);
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -128,6 +140,22 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             />
           </div>
 
+          {!isLogin && (
+            <div className="flex items-start gap-3 mt-2 pr-2">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+              />
+              <label htmlFor="terms" className="text-[10px] text-slate-500 leading-tight select-none">
+                Ho letto e accetto i <a href="/legal/terms" target="_blank" className="text-indigo-600 hover:underline font-bold">Termini di Servizio</a>, la <a href="/legal/privacy" target="_blank" className="text-indigo-600 hover:underline font-bold">Privacy Policy</a> e la <a href="/legal/cookies" target="_blank" className="text-indigo-600 hover:underline font-bold">Cookie Policy</a>. 
+                Dichiaro di aver compreso il <a href="/legal/disclaimer" target="_blank" className="text-indigo-600 hover:underline font-bold">Disclaimer Legale</a> limitativo di responsabilità di Atena.
+              </label>
+            </div>
+          )}
+
           <button 
             type="submit" 
             disabled={loading}
@@ -165,7 +193,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
 
         <div className="mt-8 text-center">
           <button 
-            onClick={() => { setIsLogin(!isLogin); setError(null); }}
+            onClick={() => { setIsLogin(!isLogin); setError(null); setAcceptedTerms(false); }}
             className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
           >
             {isLogin ? "Non hai un account? Registrati ora" : "Hai già un account? Accedi"}

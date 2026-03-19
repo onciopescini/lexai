@@ -2,7 +2,7 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 python-dotenv==1.0.1
-pydantic==2.10.4
+pydantic>=2.11.7
 requests==2.32.3
 
 # LangChain & LangGraph
@@ -14,11 +14,11 @@ langgraph==0.2.60
 pinecone-client==5.0.1
 
 # Supabase
-supabase==2.11.0
+supabase>=2.28.0
 
 # Document Generation
-fpdf2==2.8.2
-markdown==3.7.1
+fpdf2>=2.8.0
+markdown>=3.7
 
 # Email
 resend==2.7.0

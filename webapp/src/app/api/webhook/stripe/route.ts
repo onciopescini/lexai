@@ -73,6 +73,12 @@ export async function POST(req: Request) {
           );
 
           if (user) {
+            // Idempotency Check: Prevent duplicate processing for same subscription
+            if (user.user_metadata?.is_premium && user.user_metadata?.subscription_id === session.subscription) {
+              console.log(`ℹ️ [Stripe Webhook] Utente ${customerEmail} già premium. Evento ignorato (idempotenza).`);
+              break;
+            }
+
             const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
               user.id,
               {

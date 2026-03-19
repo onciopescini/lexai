@@ -3,9 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 const supabase = createClient();
-import Image from 'next/image';
-import Link from 'next/link';
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer';
+import PremiumEcosystemWrapper from '@/components/premium/PremiumEcosystemWrapper';
 
 interface GuardianAlert {
   id: string;
@@ -62,33 +61,7 @@ export default function GuardianFeed() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fbfbfd] text-slate-900 font-sans selection:bg-blue-500/20 overflow-x-hidden">
-      
-      {/* Navbar Minimal - Fixed at Top (Matches page.tsx exactly) */}
-      <nav className="w-full flex items-center justify-between p-6 max-w-6xl mx-auto border-b border-black/5 shrink-0 z-50 bg-[#fbfbfd]/70 backdrop-blur-xl sticky top-0 transition-all duration-300">
-        <div className="flex items-center gap-3">
-          <Link href="/">
-            <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm cursor-pointer" priority style={{ width: 'auto', height: 'auto' }} />
-          </Link>
-        </div>
-        <div className="flex items-center gap-7 text-sm font-bold text-slate-500">
-          <Link href="/library" className="hover:text-slate-900 transition-colors flex items-center gap-1.5 pb-1">
-             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-             Biblioteca Legale
-          </Link>
-          <Link href="/diff-demo" className="hover:text-slate-900 transition-colors flex items-center gap-1.5 pb-1">
-             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
-             Version Diff
-          </Link>
-          <Link href="/" className="hover:text-slate-900 transition-colors">Ricerca</Link>
-          <Link href="/#features" className="hover:text-slate-900 transition-colors">Funzionalità</Link>
-          <Link href="/guardian" className="text-red-500 hover:text-red-600 transition-colors font-semibold flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-            Guardian Alerts
-          </Link>
-        </div>
-      </nav>
-
+    <PremiumEcosystemWrapper>
       {/* Background Effects (Matches page.tsx) */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <div className="absolute inset-0 z-0 bg-transparent opacity-30" style={{ backgroundImage: "url('/images/atena-pattern-bg.png')", backgroundSize: "300px", backgroundRepeat: "repeat" }}></div>
@@ -226,7 +199,7 @@ export default function GuardianFeed() {
           )}
         </div>
       </main>
-    </div>
+    </PremiumEcosystemWrapper>
   );
 }
 

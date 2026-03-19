@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import PremiumEcosystemWrapper from '@/components/premium/PremiumEcosystemWrapper';
 
 interface LegalArticle {
   id: string;
@@ -103,34 +103,16 @@ export default function LibraryPage() {
   const currentBookTitle = libraryStructure.find(s => s.id === activeCode)?.books.find(b => b.id === activeBook)?.title || '';
 
   return (
-    <div className="min-h-screen bg-[#fbfbfd] text-slate-900 font-sans flex flex-col">
-      {/* Sfondo Global (Atena Pattern) */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <div className="absolute inset-0 z-0 bg-transparent opacity-30" style={{ backgroundImage: "url('/images/atena-pattern-bg.png')", backgroundSize: "300px", backgroundRepeat: "repeat" }}></div>
-        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-blue-100 blur-[120px] rounded-full mix-blend-multiply"></div>
-        <div className="absolute top-1/2 -right-1/4 w-1/2 h-1/2 bg-slate-200 blur-[120px] rounded-full mix-blend-multiply"></div>
-      </div>
-
-      {/* Navbar Mimetica */}
-      <nav className="w-full flex items-center justify-between px-6 py-4 border-b border-black/5 shrink-0 z-50 bg-[#fbfbfd]/80 backdrop-blur-xl sticky top-0">
-        <div className="flex items-center gap-3">
-          <Link href="/">
-             <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={100} height={32} className="object-contain drop-shadow-sm cursor-pointer hover:opacity-80 transition-opacity" priority style={{ width: 'auto', height: 'auto' }} loading="eager" />
-          </Link>
+    <PremiumEcosystemWrapper>
+      <div className="flex flex-col w-full h-full relative font-sans text-slate-900">
+        {/* Sfondo Global (Atena Pattern) */}
+        <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
+          <div className="absolute inset-0 z-0 bg-transparent opacity-30" style={{ backgroundImage: "url('/images/atena-pattern-bg.png')", backgroundSize: "300px", backgroundRepeat: "repeat" }}></div>
+          <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-blue-100 blur-[120px] rounded-full mix-blend-multiply"></div>
+          <div className="absolute top-1/2 -right-1/4 w-1/2 h-1/2 bg-slate-200 blur-[120px] rounded-full mix-blend-multiply"></div>
         </div>
-        <div className="flex items-center gap-6 text-sm font-bold text-slate-500">
-           <Link href="/library" className="text-slate-900 transition-colors flex items-center gap-1.5 border-b-2 border-slate-900 pb-1">
-             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-             Biblioteca Legale
-           </Link>
-           <Link href="/" className="hover:text-slate-900 transition-colors flex items-center gap-1.5 pb-1">
-             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-             Ricerca Semantica
-           </Link>
-        </div>
-      </nav>
 
-      <div className="flex flex-1 relative z-10 overflow-hidden">
+        <div className="flex flex-1 relative z-10 mt-6 min-h-[85vh] rounded-[40px] overflow-hidden border border-slate-200/50 shadow-sm mx-4 bg-white/40 backdrop-blur-3xl">
         {/* Sidebar Navigazione */}
         <aside className="w-72 bg-white/60 backdrop-blur-md border-r border-slate-200/60 flex flex-col overflow-y-auto shrink-0">
           <div className="p-5 border-b border-slate-100">
@@ -258,7 +240,8 @@ export default function LibraryPage() {
            </div>
         </main>
       </div>
-    </div>
+      </div>
+    </PremiumEcosystemWrapper>
   );
 }
 

@@ -88,7 +88,10 @@ async def agent_stream_generator(request_data: ChatRequest):
                 if "messages" in node_state and len(node_state["messages"]) > 0:
                     msg = node_state["messages"][-1]
                     
-                    if node_name == "agent" and isinstance(msg, AIMessage) and not msg.tool_calls:
+                    if node_name == "triage" and node_state.get("needs_disambiguation"):
+                        yield f"data: {json.dumps({'type': 'status', 'content': '🔎 Triage e Disambiguazione in corso...'})}\n\n"
+                        
+                    elif node_name == "agent" and isinstance(msg, AIMessage) and not msg.tool_calls:
                         yield f"data: {json.dumps({'type': 'status', 'content': 'Formulazione della risposta...'})}\n\n"
                     
                     elif node_name == "tools":
@@ -96,7 +99,7 @@ async def agent_stream_generator(request_data: ChatRequest):
                         yield f"data: {json.dumps({'type': 'tool', 'content': 'Ricerca in corso nei database storici o in rete...'})}\n\n"
                         
                     elif node_name == "fact_checker" and isinstance(msg, SystemMessage):
-                        yield f"data: {json.dumps({'type': 'status', 'content': '⚠ Rilevata inesattezza. L\'Inquisitore impone una revisione dei fatti...'})}\n\n"
+                        yield f"data: {json.dumps({'type': 'status', 'content': 'Rilevata inesattezza. Revisione dei fatti in corso...'})}\n\n"
             
             # Piccolo delay per permettere all'utente di leggere gli status nello streaming
             await asyncio.sleep(0.1)
@@ -106,24 +109,28 @@ async def agent_stream_generator(request_data: ChatRequest):
         
         try:
             final_state = agent_app.get_state(config)
-            if final_state and getattr(final_state, 'values', None) and "messages" in final_state.values:
-                final_msg = final_state.values["messages"][-1]
-                content = final_msg.content
-                
-                if isinstance(content, list):
-                    # Formatta correttamente se Gemini risponde con un array JSON strutturato
-                    text_parts = []
-                    for item in content:
-                        if isinstance(item, dict) and 'text' in item:
-                            text_parts.append(item['text'])
-                        elif isinstance(item, str):
-                            text_parts.append(item)
-                    final_content = "\n".join(text_parts) if text_parts else str(content)
-                else:
-                    final_content = content
-            elif 'msg' in locals() and hasattr(msg, 'content'):
-                # Fallback on the last seen message in the stream loop
-                final_content = msg.content
+            if final_state and getattr(final_state, 'values', None):
+                # Se è scattato il Triage HitL, ritorniamo il messaggio di triage al frontend
+                if final_state.values.get("needs_disambiguation"):
+                    final_content = final_state.values.get("triage_message", "Necessaria disambiguazione.")
+                elif "messages" in final_state.values:
+                    final_msg = final_state.values["messages"][-1]
+                    content = final_msg.content
+                    
+                    if isinstance(content, list):
+                        # Formatta correttamente se Gemini risponde con un array JSON strutturato
+                        text_parts = []
+                        for item in content:
+                            if isinstance(item, dict) and 'text' in item:
+                                text_parts.append(item['text'])
+                            elif isinstance(item, str):
+                                text_parts.append(item)
+                        final_content = "\n".join(text_parts) if text_parts else str(content)
+                    else:
+                        final_content = content
+                elif 'msg' in locals() and hasattr(msg, 'content'):
+                    # Fallback on the last seen message in the stream loop
+                    final_content = msg.content
         except Exception as state_err:
             print(f"Failed to get final state properly: {state_err}")
             if 'msg' in locals() and hasattr(msg, 'content'):
@@ -154,5 +161,6 @@ async def ask_atena(request: ChatRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    print("⚖️ Avvio dell'Atena API Gateway (Campagna 3) sulla porta 8000...")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8080))
+    print(f"⚖️ Avvio dell'Atena API Gateway sulla porta {port} (Cloud Run compatible)...")
+    uvicorn.run(app, host="0.0.0.0", port=port)

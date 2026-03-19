@@ -31,7 +31,13 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env*.local
+
+# Playwright & Testing Artifacts
+/playwright-report/
+/test-results/
+/.playwright/
+/tests/e2e/.auth/
 
 # vercel
 .vercel
@@ -43,3 +49,5 @@ next-env.d.ts
 # Sentry Config File
 .env.sentry-build-plugin
 .gitnexus
+
+.vercel
