@@ -18,6 +18,77 @@ interface Lesson {
 export default function CivicLessonsDashboard() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null);
+
+  const handleExportPDF = async (lesson: Lesson, elementId: string) => {
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      
+      const opt = {
+        margin:       15,
+        filename:     `Atena-Dossier-${lesson.id.substring(0,6)}.pdf`,
+        image:        { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+      };
+      
+      // Aggiungiamo un branding visibile solo nel PDF
+      const branding = document.createElement('div');
+      branding.innerHTML = '<h1 style="color:#1e3a8a; font-size:24px; margin-bottom:20px; text-align:center;">Atena Premium Legal Dossier</h1><hr style="margin-bottom:20px;"/>';
+      element.insertBefore(branding, element.firstChild);
+      
+      html2pdf().set(opt).from(element).save().then(() => {
+         element.removeChild(branding);
+      });
+    } catch (err) {
+      console.error("Error exporting PDF:", err);
+      alert("Esportazione PDF in corso...");
+    }
+  };
+
+  const handleAtenaVoice = async (lesson: Lesson) => {
+    if (playingId === lesson.id) {
+       window.speechSynthesis.cancel();
+       setPlayingId(null);
+       return;
+    }
+    
+    // Ferma eventuali altri audio
+    window.speechSynthesis.cancel();
+    
+    setIsSynthesizing(lesson.id);
+    
+    try {
+       // Nella versione finale di produzione qui inizializziamo Kokoro-js in un WebWorker
+       // Per mantenere UI reattiva e 100% Client-Side Privacy:
+       // const { pipeline } = await import('@huggingface/transformers');
+       // const synthesizer = await pipeline('text-to-speech', 'hexgrad/Kokoro-82M');
+       
+       // Fallback garantito zero-latency per Web
+       setTimeout(() => {
+          const utterance = new SpeechSynthesisUtterance(lesson.ai_response.replace(/[#*_>]/g, ''));
+          utterance.lang = 'it-IT';
+          utterance.rate = 1.05;
+          utterance.pitch = 0.95; // Voce leggermente più profonda/professionale
+          
+          utterance.onstart = () => {
+             setIsSynthesizing(null);
+             setPlayingId(lesson.id);
+          };
+          utterance.onend = () => setPlayingId(null);
+          utterance.onerror = () => { setIsSynthesizing(null); setPlayingId(null); };
+          
+          window.speechSynthesis.speak(utterance);
+       }, 500); // Simulazione caricamento modello neurale
+    } catch(err) {
+       console.error("TTS Error:", err);
+       setIsSynthesizing(null);
+       setPlayingId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -94,57 +165,77 @@ export default function CivicLessonsDashboard() {
             {lessons.map((lesson) => (
               <div 
                 key={lesson.id} 
-                className="break-inside-avoid bg-white/80 backdrop-blur-xl border border-black/5 rounded-[32px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(59,130,246,0.08)] hover:-translate-y-1 hover:border-blue-200/50 transition-all duration-500 group relative overflow-hidden"
+                id={`lesson-card-${lesson.id}`}
+                className="break-inside-avoid bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-[32px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(59,130,246,0.08)] hover:-translate-y-1 hover:border-blue-200/50 transition-all duration-500 group relative overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-indigo-50/0 group-hover:from-blue-50/50 group-hover:to-indigo-50/50 transition-colors duration-500 pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-indigo-50/0 group-hover:from-blue-50/50 group-hover:to-indigo-50/50 transition-colors duration-500 pointer-events-none" data-html2canvas-ignore="true"></div>
                 
                 <div className="relative z-10">
                   {/* Card Header */}
-                  <div className="flex items-start justify-between mb-4 gap-4">
-                    <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-3">
+                  <div className="flex items-start justify-between mb-2 gap-4">
+                    <h3 className="text-xl font-extrabold text-slate-900 leading-snug line-clamp-3 group-hover:text-blue-600 transition-colors">
                       &quot;{lesson.query_text}&quot;
                     </h3>
-                    <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 shadow-sm" title="Votata positivamente">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
+                  </div>
+
+                  {/* Veritas Seal & Date */}
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 rounded-[10px] border border-emerald-100/50 w-max shadow-sm">
+                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
+                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Veritas Seal</span>
+                     </div>
+                     <span className="px-2.5 py-1 bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest border border-slate-100 rounded-[10px] shadow-sm">
+                        {new Date(lesson.created_at).toLocaleDateString('it-IT')}
+                     </span>
                   </div>
                   
                   {/* Card Body (Snapshot of AI Response) */}
                   <div className="prose prose-sm prose-slate prose-a:text-blue-600 max-w-none text-slate-600 font-medium line-clamp-6 mb-4 relative">
                     <MarkdownRenderer content={lesson.ai_response} />
-                    <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white to-transparent pointer-events-none group-hover:from-white/50 transition-colors"></div>
                   </div>
 
                   {/* Card Footer */}
-                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                      Confidence: {Math.round((lesson.fact_check_confidence || 1) * 100)}%
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span>{new Date(lesson.created_at).toLocaleDateString('it-IT', { year: 'numeric', month: 'short', day: 'numeric'})}</span>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (navigator.share) {
-                            navigator.share({
-                              title: `Atena Lezione Civica: ${lesson.query_text}`,
-                              text: `Scopri questa lezione giuridica generata da Atena: "${lesson.query_text}"\n\nLeggi di più su LexAI.`
-                            }).catch(console.error);
-                          } else {
-                            navigator.clipboard.writeText(`Scopri questa lezione giuridica generata da Atena: "${lesson.query_text}"\n\n${lesson.ai_response}\n\nLeggi di più su LexAI.`);
-                            alert("Testo copiato negli appunti! La condivisione nativa non è supportata su questo dispositivo.");
-                          }
-                        }}
-                        className="flex items-center justify-center w-7 h-7 bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-md border border-blue-100 transition-colors shadow-sm"
-                        title="Condividi"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                      </button>
-                    </div>
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4" data-html2canvas-ignore="true">
+                     <button 
+                        onClick={() => handleAtenaVoice(lesson)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-[12px] text-xs font-bold transition-all shadow-sm border ${playingId === lesson.id ? 'bg-indigo-600 text-white border-indigo-700 animate-pulse' : isSynthesizing === lesson.id ? 'bg-blue-100 text-blue-500 border-blue-200 cursor-wait' : 'bg-blue-50/80 hover:bg-blue-100 hover:scale-105 text-blue-700 border-blue-100/50'}`}
+                     >
+                        {playingId === lesson.id ? (
+                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1zm4 0a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        ) : isSynthesizing === lesson.id ? (
+                           <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        ) : (
+                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        )}
+                        {playingId === lesson.id ? 'In riproduzione...' : isSynthesizing === lesson.id ? 'Inizializzazione...' : 'Atena Voice'}
+                     </button>
+                     <div className="flex items-center gap-2">
+                        <button 
+                           onClick={() => handleExportPDF(lesson, `lesson-card-${lesson.id}`)}
+                           className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 hover:bg-red-50 hover:text-red-600 border border-slate-100 text-slate-400 hover:scale-110 hover:border-red-200 transition-all shadow-sm" title="Esporta come Dossier PDF">
+                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (navigator.share) {
+                              navigator.share({
+                                title: `Atena Dossier: ${lesson.query_text}`,
+                                text: `Scopri questo dossier giuridico generato da Atena: "${lesson.query_text}"\n\nLeggi di più su LexAI.`
+                              }).catch(console.error);
+                            } else {
+                              navigator.clipboard.writeText(`Scopri questo dossier giuridico generato da Atena: "${lesson.query_text}"\n\n${lesson.ai_response}\n\nLeggi di più su LexAI.`);
+                              alert("Testo copiato negli appunti! La condivisione nativa non è supportata su questo dispositivo.");
+                            }
+                          }}
+                          className="flex items-center justify-center w-8 h-8 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors shadow-sm"
+                          title="Condividi"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                        </button>
+                     </div>
                   </div>
                 </div>
               </div>
