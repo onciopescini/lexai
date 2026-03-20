@@ -3,11 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import PremiumNavbar from './PremiumNavbar';
-import { Sparkles, Lock } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
+import { IconLock, IconSparkles } from '@tabler/icons-react';
 
 const supabase = createClient();
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function PremiumEcosystemWrapper({ children }: { children: React.ReactNode }) {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -28,53 +26,64 @@ export default function PremiumEcosystemWrapper({ children }: { children: React.
 
   const handleUpgrade = async () => {
     try {
-      const response = await fetch('/api/checkout', { method: 'POST' });
-      const { sessionId } = await response.json();
-      const stripe = await stripePromise;
-      if (stripe) {
-        stripe.redirectToCheckout({ sessionId });
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
       }
     } catch (err) {
       console.error(err);
-      alert('Network Error during Checkout');
+      alert('Errore di rete durante il Checkout.');
     }
   };
 
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbfbfd] flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin"></div>
+      <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-amber-legal/20 border-t-amber-legal animate-spin" />
       </div>
     );
   }
 
+  // Non-premium gate
   if (!isPremium) {
     return (
-      <div className="min-h-[100dvh] bg-[#fbfbfd] flex flex-col font-sans selection:bg-indigo-500/20 items-center justify-center p-6 relative overflow-hidden">
-        {/* Background Aurora */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
-           <div className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-blue-200 blur-[130px] rounded-full mix-blend-multiply opacity-50"></div>
-           <div className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-200 blur-[130px] rounded-full mix-blend-multiply opacity-50"></div>
+      <div className="min-h-[100dvh] bg-[#0a0b0f] flex items-center justify-center p-6 relative overflow-hidden">
+        {/* Background glows */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-legal/5 blur-[160px] rounded-full" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/5 blur-[120px] rounded-full" />
         </div>
-        
-        <div className="max-w-md w-full bg-white/60 backdrop-blur-2xl border border-black/5 rounded-[40px] p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] relative z-10 text-center">
-          <div className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 shadow-sm flex items-center justify-center mx-auto mb-6">
-            <Lock className="w-8 h-8 text-indigo-600" />
+
+        <div className="glass-card max-w-md w-full rounded-[32px] p-8 relative z-10 text-center animate-blur-fade-in">
+          <div className="w-16 h-16 rounded-[20px] bg-amber-legal/10 border border-amber-legal/20 flex items-center justify-center mx-auto mb-6 amber-glow">
+            <IconLock size={26} className="text-amber-legal" />
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-3">Area Esclusiva Premium</h2>
-          <p className="text-slate-500 font-medium mb-8 leading-relaxed">
-            Sblocca la potenza del Guardian Radar, la Biblioteca Legale Completa e le Civic Lessons passando ad Atena Premium.
+          <h2 className="text-2xl font-black text-white tracking-tight mb-3">Area Esclusiva Premium</h2>
+          <p className="text-white/40 font-medium mb-8 leading-relaxed text-sm">
+            Sblocca Guardian Radar, Library Normativa Completa e Lezioni Interactive passando ad Atena Premium.
           </p>
-          <button 
+
+          <button
             onClick={handleUpgrade}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-full py-4 text-[15px] font-semibold flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+            className="w-full py-4 rounded-2xl font-bold text-sm text-black
+              bg-gradient-to-b from-amber-legal to-amber-legal-dim
+              shadow-[0_8px_32px_rgba(212,168,83,0.25)]
+              hover:shadow-[0_8px_40px_rgba(212,168,83,0.4)]
+              transition-all duration-300 active:scale-[0.98]
+              flex items-center justify-center gap-2 mb-3"
           >
-            <Sparkles className="w-4 h-4 text-amber-400" />
+            <IconSparkles size={14} />
             Esegui l&apos;Upgrade Ora
           </button>
-          <button 
-            onClick={() => window.location.href = '/'}
-            className="w-full mt-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-full py-3.5 text-sm font-semibold transition-all"
+
+          <button
+            onClick={() => { window.location.href = '/'; }}
+            className="w-full py-3 rounded-2xl text-sm font-medium text-white/40 hover:text-white/70 hover:bg-white/5 transition-all"
           >
             Torna al Workspace
           </button>
@@ -83,12 +92,17 @@ export default function PremiumEcosystemWrapper({ children }: { children: React.
     );
   }
 
+  // Premium layout: sidebar + content
   return (
-    <div className="min-h-[100dvh] bg-[#fbfbfd] flex flex-col font-sans selection:bg-indigo-500/20 relative">
+    <div className="flex h-screen bg-[#0a0b0f] overflow-hidden">
+      {/* Sidebar */}
       <PremiumNavbar />
-      <div className="flex-1 w-full pb-20">
+
+      {/* Main content — scrollable */}
+      <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
         {children}
-      </div>
+      </main>
     </div>
   );
 }
+
