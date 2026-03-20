@@ -9,18 +9,9 @@ import SubscriptionModal from '../components/ui/SubscriptionModal';
 import WorkspaceLayout from '../components/workspace/WorkspaceLayout';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { NumberTicker, BlurFadeIn, TypewriterLoop } from '../components/ui/MicroInteractions';
 
-// Stats Counter Animation
-function AnimatedStat({ value, label, suffix = '' }: { value: string; label: string; suffix?: string }) {
-  return (
-    <div className="text-center group">
-      <div className="text-3xl md:text-4xl font-playfair font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900 group-hover:from-slate-600 group-hover:to-slate-800 transition-all drop-shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-        {value}{suffix}
-      </div>
-      <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold font-playfair">{label}</div>
-    </div>
-  );
-}
+
 
 // Feature Card Component
 function FeatureCard({ icon: Icon, title, description, tag }: { icon: React.ElementType; title: string; description: string; tag?: string }) {
@@ -82,7 +73,7 @@ export default function AtenaApp() {
   if (authChecking) {
     return (
       <div className="min-h-screen bg-marble-50 flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-slate-700 animate-spin"></div>
+        <div className="w-10 h-10 rounded-full border-2 border-amber-legal/20 border-t-amber-legal animate-spin" />
       </div>
     );
   }
@@ -198,12 +189,34 @@ export default function AtenaApp() {
 
               {/* LIVE STATS BAR */}
               <section className="w-full max-w-5xl mx-auto mb-20 relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-marble-200/50 via-white to-transparent rounded-[32px] blur-xl opacity-50"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-marble-200/50 via-white to-transparent rounded-[32px] blur-xl opacity-50" />
                 <div className="relative grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 p-6 md:p-8 rounded-[32px] bg-white/60 border border-marble-200 backdrop-blur-3xl shadow-[0_8px_40px_rgba(0,0,0,0.05)]">
-                  <AnimatedStat value="8.000" label="Documenti Indicizzati" suffix="+" />
-                  <AnimatedStat value="Generative" label="UI Paradigm" />
-                  <AnimatedStat value="5+" label="Database Ufficiali" />
-                  <AnimatedStat value="< 2s" label="Tempo di Risposta" />
+                  <BlurFadeIn delay={0} className="text-center">
+                    <div className="text-3xl md:text-4xl font-black text-slate-900">
+                      <NumberTicker value={8000} suffix="+" />
+                    </div>
+                    <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Documenti Indicizzati</div>
+                  </BlurFadeIn>
+                  <BlurFadeIn delay={0.08} className="text-center">
+                    <div className="text-3xl md:text-4xl font-black text-slate-900 h-[44px] flex items-center justify-center">
+                      <TypewriterLoop
+                        phrases={['AI-Native', 'Real-Time', 'RAG Hybrid', 'Agentic']}
+                        className="text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-amber-600"
+                        speed={80}
+                      />
+                    </div>
+                    <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">UI Paradigm</div>
+                  </BlurFadeIn>
+                  <BlurFadeIn delay={0.16} className="text-center">
+                    <div className="text-3xl md:text-4xl font-black text-slate-900">
+                      <NumberTicker value={5} suffix="+" />
+                    </div>
+                    <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Database Ufficiali</div>
+                  </BlurFadeIn>
+                  <BlurFadeIn delay={0.24} className="text-center">
+                    <div className="text-3xl md:text-4xl font-black text-slate-900">&lt; 2s</div>
+                    <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Tempo di Risposta</div>
+                  </BlurFadeIn>
                 </div>
               </section>
 

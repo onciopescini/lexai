@@ -5,20 +5,18 @@ import PremiumEcosystemWrapper from '@/components/premium/PremiumEcosystemWrappe
 import SemanticSearchBar from '@/components/library/SemanticSearchBar';
 import AIXRayPanel, { LegalArticle } from '@/components/library/AIXRayPanel';
 import LibrarySidebar, { libraryStructure } from '@/components/library/LibrarySidebar';
+import { motion, AnimatePresence } from 'framer-motion';
+import { IconBolt, IconClock, IconChevronRight } from '@tabler/icons-react';
 
 export default function LibraryPage() {
   const [activeCode, setActiveCode] = useState('Codice Civile');
   const [activeBook, setActiveBook] = useState('Libro V - Del Lavoro');
-  
   const [articles, setArticles] = useState<LegalArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Modalità Split-Screen
   const [selectedArticle, setSelectedArticle] = useState<LegalArticle | null>(null);
-  
-  // Macchina del Tempo (Diffing)
   const [isDiffMode, setIsDiffMode] = useState(false);
+
   useEffect(() => {
     async function loadArticles() {
       setLoading(true);
@@ -28,11 +26,10 @@ export default function LibraryPage() {
           const data = await res.json();
           setArticles(data.articles || []);
         } else {
-          console.error("Fallimento recupero articoli:", await res.text());
           setArticles([]);
         }
       } catch (err) {
-        console.error("Fetch err:", err);
+        console.error('Fetch err:', err);
         setArticles([]);
       } finally {
         setLoading(false);
@@ -42,13 +39,8 @@ export default function LibraryPage() {
     setSelectedArticle(null);
   }, [activeCode]);
 
-
-
-  // Filtraggio
   const filteredArticles = articles.filter(art => {
-    if (activeBook !== 'all' && art.libro && art.libro !== activeBook) {
-      return false;
-    }
+    if (activeBook !== 'all' && art.libro && art.libro !== activeBook) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const num = art.articolo_num ? art.articolo_num.toLowerCase() : '';
@@ -64,16 +56,16 @@ export default function LibraryPage() {
 
   return (
     <PremiumEcosystemWrapper>
-      <div className="flex flex-col w-full h-full relative font-sans text-slate-900">
-        {/* Sfondo Global (Atena Pattern) */}
-        <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-          <div className="absolute inset-0 z-0 bg-transparent opacity-30" style={{ backgroundImage: "url('/images/atena-pattern-bg.png')", backgroundSize: "300px", backgroundRepeat: "repeat" }}></div>
-          <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-blue-100 blur-[150px] rounded-full mix-blend-multiply"></div>
-          <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-indigo-100 blur-[150px] rounded-full mix-blend-multiply"></div>
-        </div>
+      {/* Background glow ambient */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-amber-legal/3 blur-[200px] rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[350px] bg-blue-600/4 blur-[180px] rounded-full" />
+      </div>
 
-        <div className="flex flex-1 relative z-10 min-h-[90vh] mx-2 my-4 md:mx-6 md:my-6 rounded-[40px] overflow-hidden border border-slate-200/50 shadow-2xl bg-white/60 backdrop-blur-3xl">
-        {/* Sidebar Navigazione */}
+      {/* 3-column layout */}
+      <div className="flex h-full relative z-10">
+
+        {/* ── COL 1: Source Navigator ── */}
         <LibrarySidebar
           activeCode={activeCode}
           setActiveCode={setActiveCode}
@@ -83,104 +75,132 @@ export default function LibraryPage() {
           setIsDiffMode={setIsDiffMode}
         />
 
-        {/* Contenuto Principale (Articoli Reali Filtrati) */}
-        <main className={`flex-1 overflow-y-auto p-8 relative transition-all duration-500 ease-in-out ${selectedArticle ? 'w-1/2 pr-4 border-r border-slate-200 bg-white/40' : 'w-full px-12 lg:px-24'}`}>
-              
-            {/* Header Ricerca Semantica */}
+        {/* ── COL 2: Article Feed ── */}
+        <main className={`flex-1 overflow-y-auto transition-all duration-500 ease-out
+          ${selectedArticle ? 'max-w-[480px]' : 'max-w-full'}`}>
+
+          {/* Sticky header */}
+          <div className="sticky top-0 z-20 glass-panel px-6 pt-6 pb-4 border-b border-white/5">
             <SemanticSearchBar
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               currentSourceTitle={currentSourceTitle}
             />
-
-            <div className="mb-8">
-                <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                    {currentBookTitle === 'Tutti gli Articoli' ? currentSourceTitle : currentBookTitle}
+            <div className="mt-4 flex items-end justify-between">
+              <div>
+                <h1 className="text-xl font-black text-white tracking-tight">
+                  {currentBookTitle === 'Tutti gli Articoli' ? currentSourceTitle : currentBookTitle || currentSourceTitle}
                 </h1>
-                <p className="text-slate-500 mt-2 font-medium">Aggiornato in tempo reale con le ultime modifiche normative.</p>
+                <p className="text-xs text-white/30 mt-0.5 font-mono flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                  Aggiornamento real-time · {filteredArticles.length} articoli
+                </p>
+              </div>
             </div>
+          </div>
 
-            {/* Lista Documenti (Dossier Layout) */}
-             <div className="space-y-6 pb-20">
-                {loading ? (
-                  <div className="flex flex-col gap-6 animate-pulse">
-                     {[1, 2, 3].map(i => (
-                       <div key={i} className="p-6 bg-white rounded-3xl border border-slate-100">
-                         <div className="h-6 bg-slate-200 rounded w-1/4 mb-4"></div>
-                         <div className="space-y-2">
-                            <div className="h-4 bg-slate-100 rounded w-full"></div>
-                            <div className="h-4 bg-slate-100 rounded w-5/6"></div>
-                         </div>
-                       </div>
-                     ))}
-                  </div>
-                ) : filteredArticles.length === 0 ? (
-                  <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-                     <span className="text-4xl block mb-4">📜</span>
-                     <h3 className="text-lg font-bold text-slate-700">Nessun articolo trovato per questa ricerca.</h3>
-                     <p className="text-sm font-medium text-slate-500 mt-2">La scansione profonda (RAG) potrebbe richiedere termini più precisi.</p>
-                  </div>
-                ) : (
-                  filteredArticles.map((art) => (
-                    <div 
-                      key={art.id} 
-                      onClick={() => { setSelectedArticle(art); setIsDiffMode(false); }}
-                      className={`group relative p-6 md:p-8 rounded-[32px] border transition-all duration-300 cursor-pointer overflow-hidden ${selectedArticle?.id === art.id ? 'bg-white border-blue-400 shadow-[0_10px_40px_rgba(59,130,246,0.1)] ring-1 ring-blue-500/20 ring-inset' : 'bg-white/80 border-slate-200/60 hover:border-slate-300 hover:shadow-lg hover:-translate-y-0.5'}`}
-                    >
-                       <div className="flex items-center gap-4 mb-4">
-                         <h3 className={`text-xl font-extrabold ${selectedArticle?.id === art.id ? 'text-blue-600' : 'text-slate-800 group-hover:text-blue-600'} transition-colors`}>
-                            {Number.isNaN(Number(art.articolo_num)) ? art.articolo_num : `Art. ${art.articolo_num}`}
-                         </h3>
-                         <div className="h-px flex-1 bg-slate-100"></div>
-                         {art.is_vigente ? (
-                           <span className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-md">
-                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                             Vigente
-                           </span>
-                         ) : (
-                           <span className="text-[10px] font-bold tracking-widest uppercase text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md">Storico</span>
-                         )}
-                       </div>
-                       
-                       <h4 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-widest">
-                          {art.titolo ? art.titolo : 'Disposizione Generale'}
-                       </h4>
-                       
-                       <div className={`text-[15px] leading-relaxed text-slate-700 font-medium ${selectedArticle?.id === art.id ? '' : 'line-clamp-4'}`}>
-                          {art.testo}
-                       </div>
-
-                       {/* Call to action "Analizza" hovering state */}
-                       <div className={`mt-6 pt-4 border-t transition-colors ${selectedArticle?.id === art.id ? 'border-blue-100 flex justify-between items-center' : 'border-slate-100 opacity-0 group-hover:opacity-100'}`}>
-                          {selectedArticle?.id === art.id ? (
-                             <>
-                               <div className="text-xs font-bold text-blue-500 uppercase tracking-widest flex items-center gap-2">
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                                  Analisi AI X-Ray Attiva
-                               </div>
-                             </>
-                          ) : (
-                             <span className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1">
-                               Clicca per Analisi AI X-Ray <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
-                             </span>
-                          )}
-                       </div>
+          {/* Article list */}
+          <div className="p-4 space-y-3 pb-24">
+            {loading ? (
+              <div className="space-y-3 animate-pulse">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="glass-card rounded-2xl p-5">
+                    <div className="h-4 bg-white/5 rounded w-1/3 mb-3" />
+                    <div className="space-y-2">
+                      <div className="h-3 bg-white/4 rounded w-full" />
+                      <div className="h-3 bg-white/4 rounded w-4/5" />
                     </div>
-                  ))
-                )}
-             </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredArticles.length === 0 ? (
+              <div className="text-center py-20 border border-white/5 rounded-2xl bg-white/2">
+                <span className="text-4xl block mb-4">📜</span>
+                <h3 className="text-sm font-bold text-white/60">Nessun articolo trovato.</h3>
+                <p className="text-xs text-white/30 mt-2">Prova termini più specifici nella ricerca.</p>
+              </div>
+            ) : (
+              filteredArticles.map((art, idx) => {
+                const isSelected = selectedArticle?.id === art.id;
+                return (
+                  <motion.div
+                    key={art.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.02, duration: 0.25 }}
+                    onClick={() => { setSelectedArticle(art); setIsDiffMode(false); }}
+                    className={`group relative glass-card rounded-2xl p-5 cursor-pointer transition-all duration-200
+                      ${isSelected
+                        ? 'border-amber-legal/30 bg-amber-legal/5 shadow-[0_0_20px_rgba(212,168,83,0.08)]'
+                        : 'hover:border-white/15 hover:bg-white/4'
+                      }`}
+                  >
+                    {/* Article header */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className={`font-black text-sm ${isSelected ? 'text-amber-legal' : 'text-white/90 group-hover:text-white'} transition-colors`}>
+                        {Number.isNaN(Number(art.articolo_num)) ? art.articolo_num : `Art. ${art.articolo_num}`}
+                      </h3>
+                      <div className="h-px flex-1 bg-white/6" />
+                      {art.is_vigente ? (
+                        <span className="flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-widest text-emerald-400/80 bg-emerald-400/8 px-2 py-0.5 rounded-full border border-emerald-400/15">
+                          <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                          Vigente
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-widest text-amber-legal/60 bg-amber-legal/6 px-2 py-0.5 rounded-full border border-amber-legal/10">
+                          <IconClock size={9} />
+                          Storico
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Title */}
+                    {art.titolo && (
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/25 mb-2">
+                        {art.titolo}
+                      </p>
+                    )}
+
+                    {/* Excerpt */}
+                    <p className={`text-sm text-white/50 leading-relaxed ${isSelected ? '' : 'line-clamp-3'}`}>
+                      {art.testo}
+                    </p>
+
+                    {/* CTA */}
+                    <div className={`mt-3 flex items-center gap-1.5 text-[11px] font-semibold transition-all duration-200
+                      ${isSelected ? 'text-amber-legal opacity-100' : 'text-white/20 opacity-0 group-hover:opacity-100'}`}>
+                      {isSelected
+                        ? <><IconBolt size={11} /> Analisi AI X-Ray Attiva</>
+                        : <><IconChevronRight size={11} /> Apri Analisi X-Ray</>
+                      }
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
         </main>
 
-        {/* 3. "AI X-Ray" Split-Screen Panel (Visibile solo se un file è selezionato) */}
-        <AIXRayPanel
-          selectedArticle={selectedArticle}
-          setSelectedArticle={setSelectedArticle}
-          isDiffMode={isDiffMode}
-          setIsDiffMode={setIsDiffMode}
-        />
-        </div>
+        {/* ── COL 3: X-Ray Slide Panel ── */}
+        <AnimatePresence>
+          {selectedArticle && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 400, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden border-l border-white/5 shrink-0"
+            >
+              <AIXRayPanel
+                selectedArticle={selectedArticle}
+                setSelectedArticle={setSelectedArticle}
+                isDiffMode={isDiffMode}
+                setIsDiffMode={setIsDiffMode}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </PremiumEcosystemWrapper>
   );
 }
-
