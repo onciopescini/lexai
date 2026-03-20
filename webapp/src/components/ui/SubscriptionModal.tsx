@@ -2,40 +2,38 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IconCheck, IconX, IconShieldCheck, IconSparkles, IconBolt } from '@tabler/icons-react';
-import { ShimmerText, AmberBadge } from './ShimmerText';
+import { IconX, IconCheck, IconLock, IconCreditCard, IconShieldCheck, IconSparkles } from '@tabler/icons-react';
 
 interface SubscriptionModalProps {
   onClose: () => void;
   userEmail: string;
 }
 
-const FEATURES_FREE = [
-  { label: '3 query AI al giorno', included: true },
-  { label: 'Costituzione e leggi base', included: true },
-  { label: 'Risposte con citazioni', included: true },
-  { label: 'Library normativa completa', included: false },
-  { label: 'Guardian — Radar Normativo', included: false },
-  { label: 'Lezioni + Voice TTS AI', included: false },
-  { label: 'PDF illimitati + X-Ray AI', included: false },
-  { label: 'Export Drive / Email', included: false },
+const FREE_FEATURES = [
+  { label: 'Chat AI con Atena (5 query/giorno)', included: true },
+  { label: 'Ricerca nel Codice Civile', included: true },
+  { label: 'Biblioteca Legale (sola lettura)', included: true },
+  { label: 'Guardian Alerts', included: false },
+  { label: 'Analisi AI X-Ray documenti', included: false },
+  { label: 'Command Palette ⌘K', included: false },
+  { label: 'TTS Audio Lezioni', included: false },
+  { label: 'Export Google Drive', included: false },
 ];
 
-const FEATURES_PREMIUM = [
-  { label: 'Query illimitate ogni giorno', included: true },
-  { label: 'Tutte le fonti normative italiane', included: true },
-  { label: 'Library — Ricerca semantica + X-Ray', included: true },
-  { label: 'Guardian — Alert normativi real-time', included: true },
-  { label: 'Lezioni interattive + Voice TTS', included: true },
-  { label: 'PDF illimitati + Analisi profonda', included: true },
-  { label: 'Export Google Drive + Email', included: true },
-  { label: 'Supporto prioritario dedicato', included: true },
+const PREMIUM_FEATURES = [
+  'Query AI illimitate',
+  'Tutti i codici (Penale, Fiscale, Lavoro…)',
+  'Guardian Radar — Alert normativi real-time',
+  'AI X-Ray — Analisi profonda documenti',
+  'Audio Lezioni (Text-to-Speech)',
+  'Export PDF / Google Drive',
+  'Accesso anticipato alle nuove feature',
 ];
 
 export default function SubscriptionModal({ onClose, userEmail }: SubscriptionModalProps) {
   const [loading, setLoading] = useState(false);
 
-  const handleSubscribe = async () => {
+  const handleCheckout = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/checkout', {
@@ -44,14 +42,9 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
         body: JSON.stringify({ email: userEmail }),
       });
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert('Errore durante la creazione del checkout: ' + (data.error || 'Sconosciuto'));
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Errore di rete contattando Stripe.');
+      if (data.url) window.location.href = data.url;
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -59,154 +52,126 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
 
   return (
     <AnimatePresence>
+      {/* Overlay */}
       <motion.div
+        key="sub-overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+        className="fixed inset-0 z-[100] bg-slate-900/25 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="absolute inset-0 bg-black/70 backdrop-blur-md"
-          onClick={onClose}
-        />
-
         {/* Modal */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-4xl glass-card rounded-[32px] overflow-hidden flex flex-col md:flex-row"
+          key="sub-modal"
+          initial={{ opacity: 0, scale: 0.97, y: 12 }}
+          animate={{ opacity: 1, scale: 1,    y: 0 }}
+          exit={{ opacity: 0, scale: 0.97,    y: 12 }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          onClick={e => e.stopPropagation()}
+          className="glass-modal rounded-[28px] w-full max-w-2xl overflow-hidden"
         >
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 z-10 w-8 h-8 rounded-full bg-white/6 hover:bg-white/12 flex items-center justify-center transition-colors"
-          >
-            <IconX size={14} className="text-white/60" />
-          </button>
-
-          {/* ── LEFT: Feature Comparison ── */}
-          <div className="flex-1 p-8 md:p-10 flex flex-col border-r border-white/5">
-            {/* Header */}
-            <div className="mb-8">
-              <AmberBadge>
-                <IconSparkles size={12} />
-                Atena Premium
-              </AmberBadge>
-              <h2 className="mt-4 text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
-                Il potere legale,<br />
-                <ShimmerText>senza compromessi.</ShimmerText>
+          {/* Header */}
+          <div className="px-8 pt-8 pb-6 border-b border-slate-100 flex items-start justify-between">
+            <div>
+              <div className="gold-badge mb-3">Premium</div>
+              <h2 className="text-2xl font-bold text-slate-900 font-serif tracking-tight">
+                Dall&apos;accesso base all&apos;intelligence legale completa.
               </h2>
-              <p className="mt-3 text-sm text-white/50 leading-relaxed">
-                Accesso completo all'ecosistema Atena: Library, Guardian, Lezioni e molto altro.
+              <p className="text-sm text-slate-500 mt-1.5">
+                Sblocca tutto l&apos;ecosistema Atena · Cancelli in qualsiasi momento.
               </p>
             </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors ml-4 shrink-0"
+            >
+              <IconX size={18} />
+            </button>
+          </div>
 
-            {/* Comparison Table */}
-            <div className="grid grid-cols-2 gap-x-6">
-              <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-3">Gratuito</p>
-                <ul className="space-y-2">
-                  {FEATURES_FREE.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-xs text-white/40">
-                      {f.included
-                        ? <IconCheck size={12} className="text-white/40 shrink-0" />
-                        : <IconX size={12} className="text-white/20 shrink-0" />}
-                      <span className={f.included ? '' : 'line-through opacity-40'}>{f.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          {/* 2-Column Body */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
 
-              <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-legal mb-3">Premium ✦</p>
-                <ul className="space-y-2">
-                  {FEATURES_PREMIUM.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-xs text-white/80">
-                      <div className="w-4 h-4 rounded-full bg-amber-legal/15 flex items-center justify-center shrink-0">
-                        <IconCheck size={9} className="text-amber-legal" />
+            {/* Left — Feature Comparison */}
+            <div className="p-8 border-r border-slate-100">
+              <p className="text-[11px] font-mono uppercase tracking-widest text-slate-400 mb-5">Confronto Piano</p>
+              <div className="space-y-3">
+                {FREE_FEATURES.map(f => (
+                  <div key={f.label} className="flex items-center gap-3">
+                    {f.included ? (
+                      <div className="w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                        <IconCheck size={11} className="text-emerald-600" strokeWidth={2.5} />
                       </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                        <IconLock size={10} className="text-slate-300" />
+                      </div>
+                    )}
+                    <span className={`text-sm ${f.included ? 'text-slate-700' : 'text-slate-400 line-through'}`}>
                       {f.label}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Social proof */}
-            <div className="mt-8 flex items-center gap-3">
-              <div className="flex -space-x-2">
-                {['A', 'M', 'G', 'L'].map((initial, i) => (
-                  <div
-                    key={i}
-                    className="w-7 h-7 rounded-full border-2 border-black flex items-center justify-center text-[9px] font-bold"
-                    style={{ background: `hsl(${i * 60 + 200}, 60%, 40%)` }}
-                  >
-                    {initial}
+                    </span>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-white/40">
-                <span className="text-white/70 font-semibold">247 avvocati</span> già su Premium questo mese
-              </p>
-            </div>
-          </div>
 
-          {/* ── RIGHT: Pricing Card ── */}
-          <div className="md:w-80 p-8 md:p-10 flex flex-col justify-center bg-gradient-to-b from-white/[0.04] to-transparent">
-            {/* Price */}
-            <div className="text-center mb-8">
-              <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-3">Piano Professionale</p>
-              <div className="flex items-end justify-center gap-1">
-                <span className="text-6xl font-black text-white">€29</span>
-                <span className="text-white/40 mb-2">/mese</span>
+              {/* Social proof */}
+              <div className="mt-6 pt-5 border-t border-slate-100 flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {['A', 'M', 'L', 'G'].map((l, i) => (
+                    <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-white flex items-center justify-center text-[9px] font-bold text-slate-600">
+                      {l}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500 font-medium">
+                  <span className="text-slate-800 font-bold">247+ avvocati</span> già su Atena Premium
+                </p>
               </div>
-              <p className="text-xs text-white/30 mt-2">
-                Fatturazione mensile · Cancella quando vuoi
-              </p>
             </div>
 
-            {/* CTA Button */}
-            <button
-              onClick={handleSubscribe}
-              disabled={loading}
-              className="relative w-full py-4 rounded-2xl font-bold text-sm overflow-hidden
-                bg-gradient-to-b from-amber-legal to-amber-legal-dim
-                text-black shadow-[0_8px_32px_rgba(212,168,83,0.3)]
-                hover:shadow-[0_8px_40px_rgba(212,168,83,0.45)]
-                transition-all duration-300 active:scale-[0.98]
-                disabled:opacity-50 disabled:cursor-not-allowed
-                flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : (
-                <>
-                  <IconBolt size={15} />
-                  Abbonati Ora — €29/mese
-                </>
-              )}
-            </button>
+            {/* Right — Pricing Card */}
+            <div className="p-8 bg-[#FAFAF8] flex flex-col">
+              <p className="text-[11px] font-mono uppercase tracking-widest text-slate-400 mb-5">Piano Premium</p>
 
-            {/* Trust signals */}
-            <div className="mt-5 flex flex-col gap-2.5">
-              <div className="flex items-center justify-center gap-2 text-xs text-white/30">
-                <IconShieldCheck size={13} className="text-white/25" />
-                Pagamento sicuro via Stripe
+              {/* Price */}
+              <div className="mb-6">
+                <div className="flex items-end gap-1.5">
+                  <span className="text-4xl font-black text-slate-900 font-serif">€29</span>
+                  <span className="text-sm text-slate-400 mb-1.5 font-medium">/mese · + IVA</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Oppure €249/anno (risparmia il 28%)</p>
               </div>
-              <div className="flex items-center justify-center gap-2 text-xs text-white/30">
-                <IconCheck size={13} className="text-white/25" />
-                Nessun vincolo — cancella online
+
+              {/* Premium features list */}
+              <div className="space-y-2.5 mb-8 flex-1">
+                {PREMIUM_FEATURES.map(f => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <IconSparkles size={13} className="text-[#C9A84C] shrink-0" />
+                    <span className="text-sm text-slate-700">{f}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-center gap-2 text-xs text-white/30">
-                <IconCheck size={13} className="text-white/25" />
-                Fattura IVA italiana inclusa
+
+              {/* CTA */}
+              <button
+                onClick={handleCheckout}
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl gold-btn text-sm font-bold tracking-wide disabled:opacity-60 animate-gold-pulse"
+              >
+                {loading ? 'Reindirizzamento…' : 'Inizia ora — Prova 7 giorni gratis ✦'}
+              </button>
+
+              {/* Trust signals */}
+              <div className="mt-4 flex items-center justify-center gap-4">
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                  <IconCreditCard size={12} />
+                  Stripe · Pagamento Sicuro
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                  <IconShieldCheck size={12} />
+                  Cancella quando vuoi
+                </div>
               </div>
             </div>
           </div>

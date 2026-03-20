@@ -84,7 +84,7 @@ export default function AtenaApp() {
       {/* Navbar Minimal - Fixed at Top */}
       <nav className="w-full h-[80px] flex items-center justify-between px-6 max-w-[1400px] mx-auto border-b border-marble-200 shrink-0 z-50 bg-white/80 backdrop-blur-2xl sticky top-0 transition-all duration-300">
         <Link href="/" className="flex items-center gap-3 group">
-          <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={110} height={35} className="object-contain drop-shadow-sm mix-blend-multiply group-hover:scale-105 transition-transform" priority style={{ width: 'auto', height: 'auto' }} />
+          <Image src="/atena-logo.png" alt="Atena — AI Legal Intelligence" width={110} height={35} className="object-contain group-hover:scale-105 transition-transform" priority style={{ width: 'auto', height: 'auto' }} />
         </Link>
         <div className="flex items-center gap-7 text-sm font-bold text-slate-500 hidden lg:flex">
           {!user && (

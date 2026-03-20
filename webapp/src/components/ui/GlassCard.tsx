@@ -1,80 +1,65 @@
 'use client';
 
-import { motion, HTMLMotionProps } from 'framer-motion';
-import { clsx } from 'clsx';
+import React from 'react';
+import { motion } from 'framer-motion';
 
-interface GlassCardProps extends HTMLMotionProps<'div'> {
-  /** Aggiunge il bordo ambra al hover */
-  amberHover?: boolean;
-  /** Aggiunge un glow ambra fisso */
-  amberGlow?: boolean;
-  /** Padding interno */
-  padding?: 'none' | 'sm' | 'md' | 'lg';
-  /** Anima l'apparizione con blur-fade */
-  animate?: boolean;
+interface GlassCardProps {
   children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+  hover?: boolean;
+  goldAccent?: boolean;   // premium-only: gold left border
+  animate?: boolean;
+  padding?: 'sm' | 'md' | 'lg' | 'none';
+  as?: 'div' | 'section' | 'article';
 }
 
 const paddingMap = {
   none: '',
-  sm: 'p-3',
-  md: 'p-5',
+  sm: 'p-4',
+  md: 'p-6',
   lg: 'p-8',
 };
 
 /**
- * GlassCard — Dark Glassmorphism 2026
- * Componente base per card con backdrop-blur e bordo luminoso sottile.
- * Ispirato al design di Ironclad e Stripe Atlas.
+ * GlassCard — Light Glassmorphism base card component.
+ * Uses white/82 background + backdrop-blur-xl + subtle hairline border.
+ * Gold accent variant for premium content sections only.
  */
-export function GlassCard({
-  amberHover = true,
-  amberGlow = false,
-  padding = 'md',
-  animate = true,
-  className,
+export default function GlassCard({
   children,
-  ...props
+  className = '',
+  onClick,
+  hover = true,
+  goldAccent = false,
+  animate = true,
+  padding = 'md',
+  as: Tag = 'div',
 }: GlassCardProps) {
-  const Comp = animate ? motion.div : 'div' as unknown as typeof motion.div;
+  const base =
+    `glass-card rounded-2xl ${paddingMap[padding]} ${
+      goldAccent ? 'border-l-2 border-l-[#C9A84C]' : ''
+    } ${onClick ? 'cursor-pointer' : ''} ${className}`;
+
+  if (animate) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8, filter: 'blur(4px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0)' }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        onClick={onClick}
+        className={base}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
+      >
+        {children}
+      </motion.div>
+    );
+  }
 
   return (
-    <Comp
-      initial={animate ? { opacity: 0, y: 8, filter: 'blur(6px)' } : undefined}
-      animate={animate ? { opacity: 1, y: 0, filter: 'blur(0px)' } : undefined}
-      transition={animate ? { duration: 0.4, ease: [0.16, 1, 0.3, 1] } : undefined}
-      className={clsx(
-        'glass-card rounded-2xl',
-        paddingMap[padding],
-        amberHover && 'hover:border-amber-legal/30',
-        amberGlow && 'amber-glow',
-        className
-      )}
-      {...props}
-    >
+    <Tag onClick={onClick} className={base} role={onClick ? 'button' : undefined}>
       {children}
-    </Comp>
-  );
-}
-
-/**
- * GlassCardHeader — Intestazione con separatore sottile
- */
-export function GlassCardHeader({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={clsx('pb-3 mb-3 border-b border-white/5', className)}>
-      {children}
-    </div>
-  );
-}
-
-/**
- * GlassCardTitle — Titolo con stile tipografico legale
- */
-export function GlassCardTitle({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <h3 className={clsx('text-sm font-semibold text-white/90 tracking-wide uppercase', className)}>
-      {children}
-    </h3>
+    </Tag>
   );
 }

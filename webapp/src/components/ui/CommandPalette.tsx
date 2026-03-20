@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Command } from 'cmdk';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -8,139 +8,132 @@ import {
   IconSearch,
   IconBook,
   IconShield,
-  IconSchool,
-  IconBolt,
+  IconBrain,
+  IconLibrary,
   IconX,
 } from '@tabler/icons-react';
 
-interface CommandPaletteProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-const ITEMS = [
-  {
-    group: 'Navigazione',
-    items: [
-      { icon: IconBolt, label: 'Chat Legale', shortcut: 'G H', href: '/' },
-      { icon: IconBook, label: 'Library — Normativa', shortcut: 'G L', href: '/library' },
-      { icon: IconShield, label: 'Guardian Alerts', shortcut: 'G G', href: '/guardian' },
-      { icon: IconSchool, label: 'Lezioni Legali', shortcut: 'G E', href: '/lessons' },
-    ],
-  },
+const COMMANDS = [
+  { id: 'library',  label: 'Biblioteca Legale',    icon: IconLibrary, href: '/library',  shortcut: 'L' },
+  { id: 'guardian', label: 'Guardian — Alert',      icon: IconShield,  href: '/guardian', shortcut: 'G' },
+  { id: 'lessons',  label: 'Lezioni Legali',        icon: IconBook,    href: '/lessons',  shortcut: 'I' },
+  { id: 'atena',    label: 'Chat con Atena AI',     icon: IconBrain,   href: '/atena',    shortcut: 'A' },
 ];
 
 /**
- * CommandPalette — ⌘K global shortcut
- * Ispirato a Linear.app e Vercel Dashboard.
- * Solo per utenti Premium (il wrapper genitore gestisce l'accesso).
+ * CommandPalette — Light Glassmorphism ⌘K palette.
+ * Triggered by Cmd+K / Ctrl+K. White/90 glass, slate text, gold selected state.
  */
-export function CommandPalette({ open, onClose }: CommandPaletteProps) {
+export default function CommandPalette() {
+  const [open, setOpen] = useState(false);
   const router = useRouter();
-  const [query, setQuery] = React.useState('');
 
-  // Navigazione keyboard
-  React.useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+  const toggle = useCallback(() => setOpen(o => !o), []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        // Il parent gestisce il toggle
+        toggle();
       }
-      if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
-  }, [onClose]);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [toggle]);
 
-  const handleSelect = (href: string) => {
-    onClose();
+  const navigate = (href: string) => {
+    setOpen(false);
     router.push(href);
   };
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Backdrop */}
+    <>
+      <AnimatePresence>
+        {open && (
           <motion.div
-            key="backdrop"
+            key="palette-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 cmd-backdrop"
-            onClick={onClose}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-[999] bg-slate-900/20 backdrop-blur-sm"
           />
+        )}
+      </AnimatePresence>
 
-          {/* Palette */}
+      <AnimatePresence>
+        {open && (
           <motion.div
             key="palette"
-            initial={{ opacity: 0, scale: 0.96, y: -12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -12 }}
+            initial={{ opacity: 0, scale: 0.97, y: -8 }}
+            animate={{ opacity: 1, scale: 1,    y: 0 }}
+            exit={{ opacity: 0, scale: 0.97,    y: -8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed top-[20vh] left-1/2 -translate-x-1/2 z-50 w-full max-w-lg"
+            className="fixed top-[20%] left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[520px] px-4"
           >
             <Command
-              className="glass-card rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
-              onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+              className="glass-modal rounded-2xl overflow-hidden"
+              label="Navigazione rapida"
             >
-              {/* Input */}
-              <div className="flex items-center gap-3 px-4 py-4 border-b border-white/6">
-                <IconSearch size={16} className="text-white/40 shrink-0" />
+              {/* Search Input */}
+              <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-100">
+                <IconSearch size={16} className="text-slate-400 shrink-0" />
                 <Command.Input
-                  value={query}
-                  onValueChange={setQuery}
-                  placeholder="Cerca una sezione..."
-                  className="flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none"
+                  placeholder="Cerca una sezione…"
+                  className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
                   autoFocus
                 />
-                <button onClick={onClose} className="text-white/30 hover:text-white/60 transition-colors">
-                  <IconX size={14} />
+                <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                  <IconX size={15} />
                 </button>
               </div>
 
-              {/* Results */}
-              <Command.List className="max-h-72 overflow-y-auto p-2 space-y-1">
-                <Command.Empty className="py-8 text-center text-sm text-white/30">
+              {/* Commands */}
+              <Command.List className="max-h-64 overflow-y-auto py-2">
+                <Command.Empty className="px-4 py-6 text-center text-sm text-slate-400">
                   Nessun risultato trovato.
                 </Command.Empty>
 
-                {ITEMS.map((group) => (
-                  <Command.Group
-                    key={group.group}
-                    heading={group.group}
-                    className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-white/30 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest"
-                  >
-                    {group.items.map((item) => (
-                      <Command.Item
-                        key={item.href}
-                        value={item.label}
-                        onSelect={() => handleSelect(item.href)}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer
-                          text-sm text-white/80 hover:text-white
-                          data-[selected=true]:bg-white/6 data-[selected=true]:text-white
-                          transition-colors duration-150"
-                      >
-                        <item.icon size={16} className="text-amber-legal shrink-0" />
-                        <span className="flex-1">{item.label}</span>
-                        <kbd className="px-2 py-0.5 rounded text-[10px] bg-white/6 text-white/30 font-mono border border-white/5">
-                          {item.shortcut}
-                        </kbd>
-                      </Command.Item>
-                    ))}
-                  </Command.Group>
-                ))}
+                <Command.Group heading="Navigazione" className="px-2">
+                  {COMMANDS.map(cmd => (
+                    <Command.Item
+                      key={cmd.id}
+                      value={cmd.label}
+                      onSelect={() => navigate(cmd.href)}
+                      className="
+                        flex items-center gap-3 px-3 py-2.5 rounded-xl
+                        text-sm text-slate-700 cursor-pointer
+                        data-[selected=true]:bg-[#F0E9D6] data-[selected=true]:text-[#9C7A2A]
+                        transition-colors
+                      "
+                    >
+                      <cmd.icon size={16} className="shrink-0" />
+                      <span className="flex-1">{cmd.label}</span>
+                      <kbd className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                        {cmd.shortcut}
+                      </kbd>
+                    </Command.Item>
+                  ))}
+                </Command.Group>
               </Command.List>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-4 px-4 py-2.5 border-t border-white/5">
-                <span className="text-[11px] text-white/25 font-mono">↵ apri &nbsp; esc chiudi</span>
+              <div className="px-4 py-2.5 border-t border-slate-100 flex items-center gap-4">
+                <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
+                  <kbd className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">↑↓</kbd> naviga
+                </span>
+                <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
+                  <kbd className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">↵</kbd> apri
+                </span>
+                <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
+                  <kbd className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">Esc</kbd> chiudi
+                </span>
               </div>
             </Command>
           </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

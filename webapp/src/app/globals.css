@@ -1,225 +1,269 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
 @import "tailwindcss";
 
+/* ============================================================
+   ATENA — Light Glassmorphism Design System 2026
+   Philosophy: Calm Legal Intelligence · Clarity · Trust
+   Inspiration: Stripe Atlas, Ironclad, Clio, Notion
+   ============================================================ */
+
 @theme {
-  /* ── Fondamentali "Marmo Legale" ───────────────── */
-  --color-marble-50: #FCFCFD;
-  --color-marble-100: #F4F4F5;
-  --color-marble-200: #E4E4E7;
-  --color-marble-300: #D4D4D8;
+  /* ── Typography ── */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-serif: 'Libre Baskerville', Georgia, serif;
 
-  /* ── Ardesia / Grafite ─────────────────────────── */
-  --color-slate-700: #3F3F46;
-  --color-slate-800: #27272A;
-  --color-slate-900: #09090B;
+  /* ── Base Backgrounds ── */
+  --color-bg-base:    #F7F7F5; /* warm off-white — Notion-esque */
+  --color-bg-surface: rgba(255, 255, 255, 0.82);
+  --color-bg-elevated:rgba(255, 255, 255, 0.95);
 
-  /* ── Accento Ambra Legale (2026) ───────────────── */
-  --color-amber-legal: #d4a853;
-  --color-amber-legal-dim: #a07830;
-  --color-amber-legal-glow: rgba(212, 168, 83, 0.18);
+  /* ── Glass System ── */
+  --glass-blur:   20px;
+  --glass-blur-lg:32px;
+  --glass-border: rgba(0, 0, 0, 0.07);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --glass-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.08);
 
-  /* ── Platinum (secondario) ─────────────────────── */
-  --color-platinum-400: #A1A1AA;
-  --color-platinum-500: #71717A;
-  --color-platinum-600: #52525B;
+  /* ── Text ── */
+  --color-text-primary:   #0F172A; /* slate-900 — maximum legibility */
+  --color-text-secondary: #64748B; /* slate-500 */
+  --color-text-tertiary:  #94A3B8; /* slate-400 */
+  --color-text-inverse:   #FFFFFF;
 
-  /* ── Luce Divina ───────────────────────────────── */
-  --color-divine-light: #F7E9C8;
+  /* ── Legal Gold (Premium only) ── */
+  --color-legal-gold:       #C9A84C;
+  --color-legal-gold-light: #F0E9D6;
+  --color-legal-gold-dark:  #9C7A2A;
 
-  /* ── Glassmorphism Tokens ──────────────────────── */
-  --glass-bg: rgba(10, 11, 15, 0.72);
-  --glass-bg-light: rgba(255, 255, 255, 0.06);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255,255,255,0.04) inset;
-  --glass-blur: blur(22px) saturate(160%);
+  /* ── Marble & Stone (legacy compat) ── */
+  --color-marble-50:   #FAFAF8;
+  --color-marble-100:  #F4F3EF;
+  --color-marble-200:  #E8E6DF;
+  --color-platinum-200:#E2E2E0;
+  --color-platinum-300:#D4D3CF;
 
-  /* ── Tipografie ────────────────────────────────── */
-  --font-playfair: var(--font-playfair), "Georgia", serif;
-  --font-mono-legal: "DM Mono", "JetBrains Mono", ui-monospace, monospace;
+  /* ── Functional Colors ── */
+  --color-success: #16A34A; /* green-600 */
+  --color-warning: #CA8A04; /* yellow-600 */
+  --color-danger:  #DC2626; /* red-600 */
+  --color-info:    #2563EB; /* blue-600 */
+
+  /* ── Animations ── */
+  --animate-blur-fade-in:  blur-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-shimmer:       shimmer 2.2s linear infinite;
+  --animate-float:         float 6s ease-in-out infinite;
+  --animate-fade-in-up:    fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-cursor-blink:  cursor-blink 0.9s step-end infinite;
 }
 
-/* ════════════════════════════════════════════════════
-   BASE UTILITIES
-══════════════════════════════════════════════════════ */
-@layer utilities {
-
-  /* ── Animazioni Legacy (blob, float, glow, mesh) ── */
-  .animate-blob { animation: blob 10s infinite; }
-  .animation-delay-2000 { animation-delay: 2s; }
-  .animate-float { animation: float 6s ease-in-out infinite; }
-  .animate-glow { animation: glow 4s ease-in-out infinite alternate; }
-  .animate-mesh { animation: mesh-pulse 15s ease-in-out infinite alternate; }
-  .animate-aurora { background-size: 200% 200%; animation: aurora 20s ease infinite; }
-  .animate-fade-in-up { animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
-  /* ── Animazioni 2026 ───────────────────────────── */
-  .animate-shimmer-border { animation: shimmer-border 3s linear infinite; }
-  .animate-blur-fade-in { animation: blur-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-number-tick { animation: number-tick 0.3s ease-out forwards; }
-  .animate-beam { animation: beam-move 8s linear infinite; }
-  .animate-shiny-text { animation: shiny-text 3s ease-in-out infinite; }
-
-  /* ── Glass Components ──────────────────────────── */
-  .glass-panel {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-  }
-
-  .glass-card {
-    background: rgba(14, 15, 20, 0.65);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.03) inset;
-    transition: border-color 0.25s, box-shadow 0.25s;
-  }
-  .glass-card:hover {
-    border-color: rgba(212, 168, 83, 0.22);
-    box-shadow: 0 4px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(212, 168, 83, 0.1) inset;
-  }
-
-  .glass-panel-legacy {
-    @apply bg-white/70 backdrop-blur-3xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.02)] dark:bg-slate-900/60 dark:border-slate-800/50;
-  }
-
-  /* ── Amber Legal Accents ───────────────────────── */
-  .amber-glow {
-    box-shadow: 0 0 24px var(--color-amber-legal-glow), 0 0 8px var(--color-amber-legal-glow);
-  }
-  .amber-border {
-    border-color: var(--color-amber-legal);
-  }
-  .text-amber-legal { color: var(--color-amber-legal); }
-  .bg-amber-legal-glow { background: var(--color-amber-legal-glow); }
-
-  /* ── DM Mono Legal Text ────────────────────────── */
-  .font-legal-mono { font-family: var(--font-mono-legal); }
-
-  /* ── Grain Texture Overlay ─────────────────────── */
-  .grain-overlay::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 999;
-    opacity: 0.025;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    background-size: 256px 256px;
-  }
-
-  /* ── Shimmer Highlight ─────────────────────────── */
-  .shimmer-text {
-    background: linear-gradient(
-      90deg,
-      rgba(212, 168, 83, 0.5) 0%,
-      rgba(212, 168, 83, 1) 40%,
-      rgba(255, 255, 255, 0.95) 50%,
-      rgba(212, 168, 83, 1) 60%,
-      rgba(212, 168, 83, 0.5) 100%
-    );
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: shiny-text 3s ease-in-out infinite;
-  }
-
-  /* ── Command Palette Styles ────────────────────── */
-  .cmd-backdrop {
-    backdrop-filter: blur(8px);
-    background: rgba(0, 0, 0, 0.6);
-  }
-
-  /* ── Squircle ──────────────────────────────────── */
-  .squircle {
-    border-radius: 1.5rem;
-    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><path d='M100 0C20 0 0 20 0 100s20 100 100 100 100-20 100-100S180 0 100 0z'/></svg>");
-    mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><path d='M100 0C20 0 0 20 0 100s20 100 100 100 100-20 100-100S180 0 100 0z'/></svg>");
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-  }
-  .squircle-lg {
-    border-radius: 2rem;
-    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><path d='M100 0C10 0 0 10 0 100s10 100 100 100 100-10 100-100S190 0 100 0z'/></svg>");
-    mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><path d='M100 0C10 0 0 10 0 100s10 100 100 100 100-10 100-100S190 0 100 0z'/></svg>");
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-  }
-}
-
-/* ════════════════════════════════════════════════════
-   KEYFRAMES
-══════════════════════════════════════════════════════ */
-
-/* Legacy */
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.05); }
-  66% { transform: translate(-20px, 20px) scale(0.95); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
-  100% { transform: translateY(0px); }
-}
-@keyframes glow {
-  from { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05); }
-  to { box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1), 0 0 20px 5px rgba(255, 255, 255, 0.5); }
-}
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-@keyframes mesh-pulse {
-  0% { transform: scale(1) translate(0, 0); opacity: 0.5; }
-  33% { transform: scale(1.1) translate(2%, 3%); opacity: 0.7; }
-  66% { transform: scale(0.9) translate(-2%, -1%); opacity: 0.4; }
-  100% { transform: scale(1) translate(0, 0); opacity: 0.5; }
-}
-@keyframes aurora {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* 2026 New Keyframes */
-@keyframes shimmer-border {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
+/* ── Keyframes ── */
 @keyframes blur-fade-in {
-  from { opacity: 0; filter: blur(8px); transform: translateY(6px); }
-  to { opacity: 1; filter: blur(0); transform: translateY(0); }
-}
-@keyframes number-tick {
-  from { transform: translateY(8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-@keyframes beam-move {
-  0% { transform: translateX(-150%) rotate(-15deg); opacity: 0; }
-  10% { opacity: 0.6; }
-  90% { opacity: 0.6; }
-  100% { transform: translateX(250%) rotate(-15deg); opacity: 0; }
-}
-@keyframes shiny-text {
-  0% { background-position: 200% center; }
-  100% { background-position: -200% center; }
-}
-@keyframes hover-border-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  from { opacity: 0; filter: blur(8px); transform: translateY(8px); }
+  to   { opacity: 1; filter: blur(0);   transform: translateY(0); }
 }
 
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes gold-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
+  50%       { box-shadow: 0 0 0 6px rgba(201, 168, 76, 0.12); }
+}
+
+/* ============================================================
+   GLOBAL RESETS
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #F7F7F5;
+  color: #0F172A;
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   GLOBAL LAYOUT — used by PremiumEcosystemWrapper
+   ============================================================ */
+.premium-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #F7F7F5;
+}
+
+.premium-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ============================================================
+   LIGHT GLASS COMPONENT SYSTEM
+   ============================================================ */
+
+/* Base glass card — the fundamental building block */
+.glass-card {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.glass-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.10);
+}
+
+/* Panel — for sidebars and sticky headers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Modal overlay glass */
+.glass-modal {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
+}
+
+/* ============================================================
+   SHIMMER TEXT — for premium signals
+   ============================================================ */
+.shimmer-gold {
+  background: linear-gradient(
+    90deg,
+    #9C7A2A 0%,
+    #C9A84C 40%,
+    #E8D5A0 50%,
+    #C9A84C 60%,
+    #9C7A2A 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2.5s linear infinite;
+}
+
+.shimmer-slate {
+  background: linear-gradient(
+    90deg,
+    #334155 0%,
+    #64748B 40%,
+    #94A3B8 50%,
+    #64748B 60%,
+    #334155 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2.5s linear infinite;
+}
+
+/* ============================================================
+   LEGAL GOLD ACCENT — badge, CTA, active states
+   ============================================================ */
+.gold-badge {
+  background: #F0E9D6;
+  color: #9C7A2A;
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.gold-btn {
+  background: #C9A84C;
+  color: #FFFFFF;
+  border: 1px solid #9C7A2A;
+  transition: background 150ms ease, transform 100ms ease;
+}
+
+.gold-btn:hover {
+  background: #B8922F;
+  transform: translateY(-1px);
+}
+
+.gold-btn:active {
+  transform: translateY(0);
+}
+
+/* ============================================================
+   SIDEBAR NAV — light panel style
+   ============================================================ */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #64748B;
+  transition: background 150ms ease, color 150ms ease;
+  cursor: pointer;
+}
+
+.sidebar-nav-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #0F172A;
+}
+
+.sidebar-nav-item.active {
+  background: #F0E9D6;
+  color: #9C7A2A;
+  font-weight: 600;
+}
+
+/* ============================================================
+   ANIMATION UTILITIES
+   ============================================================ */
+.animate-blur-fade-in { animation: var(--animate-blur-fade-in); }
+.animate-shimmer      { animation: var(--animate-shimmer); }
+.animate-float        { animation: var(--animate-float); }
+.animate-fade-in-up   { animation: var(--animate-fade-in-up); }
+.animate-cursor-blink { animation: var(--animate-cursor-blink); }
+.animate-gold-pulse   { animation: gold-pulse 2s ease-in-out infinite; }

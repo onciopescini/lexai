@@ -3,106 +3,79 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import PremiumNavbar from './PremiumNavbar';
-import { IconLock, IconSparkles } from '@tabler/icons-react';
+import Link from 'next/link';
+import { IconLock } from '@tabler/icons-react';
 
-const supabase = createClient();
+interface Props {
+  children: React.ReactNode;
+}
 
-export default function PremiumEcosystemWrapper({ children }: { children: React.ReactNode }) {
+/**
+ * PremiumEcosystemWrapper — Light glassmorphism layout.
+ * Wraps premium pages with sidebar + main content area.
+ * Shows a lock gate for non-premium users.
+ */
+export default function PremiumEcosystemWrapper({ children }: Props) {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
-    const checkPremiumStatus = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setIsPremium(user.user_metadata?.is_premium === true);
-      } else {
-        setIsPremium(false);
-      }
-      setLoading(false);
+    const check = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) { setIsPremium(false); return; }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_premium')
+        .eq('id', user.id)
+        .single();
+      setIsPremium(profile?.is_premium === true || user.user_metadata?.is_premium === true);
     };
-    checkPremiumStatus();
-  }, []);
-
-  const handleUpgrade = async () => {
-    try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Errore di rete durante il Checkout.');
-    }
-  };
+    check();
+  }, [supabase]);
 
   // Loading state
-  if (loading) {
+  if (isPremium === null) {
     return (
-      <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-amber-legal/20 border-t-amber-legal animate-spin" />
+      <div className="min-h-screen bg-[#F7F7F5] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-[#C9A84C]/30 border-t-[#C9A84C] animate-spin" />
       </div>
     );
   }
 
-  // Non-premium gate
+  // Lock gate — non-premium users
   if (!isPremium) {
     return (
-      <div className="min-h-[100dvh] bg-[#0a0b0f] flex items-center justify-center p-6 relative overflow-hidden">
-        {/* Background glows */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-legal/5 blur-[160px] rounded-full" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/5 blur-[120px] rounded-full" />
-        </div>
-
-        <div className="glass-card max-w-md w-full rounded-[32px] p-8 relative z-10 text-center animate-blur-fade-in">
-          <div className="w-16 h-16 rounded-[20px] bg-amber-legal/10 border border-amber-legal/20 flex items-center justify-center mx-auto mb-6 amber-glow">
-            <IconLock size={26} className="text-amber-legal" />
+      <div className="min-h-screen bg-[#F7F7F5] flex items-center justify-center p-6">
+        <div className="glass-modal rounded-[28px] p-10 max-w-md w-full text-center">
+          <div className="w-14 h-14 rounded-2xl bg-[#F0E9D6] border border-[#C9A84C]/25 flex items-center justify-center mx-auto mb-6">
+            <IconLock size={22} className="text-[#9C7A2A]" />
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight mb-3">Area Esclusiva Premium</h2>
-          <p className="text-white/40 font-medium mb-8 leading-relaxed text-sm">
-            Sblocca Guardian Radar, Library Normativa Completa e Lezioni Interactive passando ad Atena Premium.
+          <h2 className="text-xl font-bold text-slate-900 font-serif mb-2">
+            Contenuto Premium
+          </h2>
+          <p className="text-sm text-slate-500 leading-relaxed mb-6">
+            Questa sezione è riservata agli utenti Atena Premium. Accedi alla piattaforma completa con un abbonamento mensile.
           </p>
-
-          <button
-            onClick={handleUpgrade}
-            className="w-full py-4 rounded-2xl font-bold text-sm text-black
-              bg-gradient-to-b from-amber-legal to-amber-legal-dim
-              shadow-[0_8px_32px_rgba(212,168,83,0.25)]
-              hover:shadow-[0_8px_40px_rgba(212,168,83,0.4)]
-              transition-all duration-300 active:scale-[0.98]
-              flex items-center justify-center gap-2 mb-3"
+          <Link
+            href="/"
+            className="inline-block w-full py-3 rounded-xl gold-btn text-sm font-semibold text-center"
           >
-            <IconSparkles size={14} />
-            Esegui l&apos;Upgrade Ora
-          </button>
-
-          <button
-            onClick={() => { window.location.href = '/'; }}
-            className="w-full py-3 rounded-2xl text-sm font-medium text-white/40 hover:text-white/70 hover:bg-white/5 transition-all"
-          >
-            Torna al Workspace
-          </button>
+            Scopri Premium ✦
+          </Link>
+          <p className="text-[11px] text-slate-400 mt-4">7 giorni di prova gratuita · Cancelli quando vuoi</p>
         </div>
       </div>
     );
   }
 
-  // Premium layout: sidebar + content
+  // Premium layout — sidebar + content
   return (
-    <div className="flex h-screen bg-[#0a0b0f] overflow-hidden">
-      {/* Sidebar */}
+    <div className="premium-layout">
       <PremiumNavbar />
-
-      {/* Main content — scrollable */}
-      <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+      <div className="premium-content">
         {children}
-      </main>
+      </div>
     </div>
   );
 }
-
