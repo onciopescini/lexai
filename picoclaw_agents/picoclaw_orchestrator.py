@@ -11,8 +11,35 @@ import picoclaw_perplexity_ingest
 import advanced_multimodal_ingestion
 import shutil
 import mimetypes
+import sentry_sdk
+from tenacity import retry, wait_exponential, stop_after_attempt
 
 load_dotenv()
+
+# Redis/RQ Setup for Asynchronous Queues
+redis_url = os.getenv("REDIS_URL") or os.getenv("UPSTASH_REDIS_URL")
+if redis_url:
+    try:
+        from redis import Redis
+        from rq import Queue
+        redis_conn = Redis.from_url(redis_url)
+        task_queue = Queue('atena_tasks', connection=redis_conn)
+        use_rq = True
+        print("[System] Avvio con code Redis (RQ) attive.")
+    except ImportError:
+        use_rq = False
+        print("[System] Libreria 'rq' non trovata. Fallback in modalità sincrona.")
+else:
+    use_rq = False
+    print("[System] REDIS_URL non fornito. Fallback in modalità sincrona standalone.")
+
+# Inizializza Sentry (assicurarsi di avere SENTRY_DSN in .env)
+sentry_dsn = os.getenv("SENTRY_DSN")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        traces_sample_rate=1.0,
+    )
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -74,6 +101,31 @@ def get_last_run(agent_name: str, task_type: str) -> float:
         
     return 0.0 # Never run
 
+@retry(wait=wait_exponential(multiplier=1, min=4, max=60), stop=stop_after_attempt(3), reraise=True)
+def run_civic_trend_analysis():
+    # Esegue la logica
+    # advanced_civic_education_pipeline.run_guardian_protocol()
+    supabase.table("agent_memory").insert({"agent_name":"CivicEd","task_type":"TrendAnalysis","status":"PROCESSING","details":{}}).execute()
+    log_agent_memory("CivicEd", "TrendAnalysis", "SUCCESS", {"items_generated": 1})
+
+@retry(wait=wait_exponential(multiplier=1, min=4, max=60), stop=stop_after_attempt(3), reraise=True)
+def run_legal_trap_scan():
+    # Per il test, passiamo una mock law fittizia diversa per dimostrare l'autonomia
+    mock_scan_result = f"Gazzetta Ufficiale: Introdotta nuova tassa occulta sui prelievi Bancomat superiori a 50 euro, con effetto immediato da oggi. Trattenuta automatica del 5%."
+    citizen_guardian_protocol.trigger_citizen_protection_alert(mock_scan_result)
+    log_agent_memory("Guardian", "LegalTrapScan", "SUCCESS", {"threat_found": True})
+
+@retry(wait=wait_exponential(multiplier=1, min=4, max=60), stop=stop_after_attempt(3), reraise=True)
+def run_perplexity_auto_ingest():
+    agent = picoclaw_perplexity_ingest.PerplexityAgent()
+    agent.run_pipeline()
+    log_agent_memory("PerplexityCrawler", "AutoIngest", "SUCCESS", {})
+
+@retry(wait=wait_exponential(multiplier=1, min=4, max=60), stop=stop_after_attempt(3), reraise=True)
+def run_multimodal_ingestor(file_path: str, title: str, mime_type: str):
+    multimodal_agent = advanced_multimodal_ingestion.MultimodalIngestor()
+    multimodal_agent.process_file(file_path, title, mime_type)
+
 def run_orchestrator():
     print("===================================================")
     print("🕷️  PicoClaw Orchestration Daemon - SYSTEM ONLINE  🕷️")
@@ -94,15 +146,17 @@ def run_orchestrator():
         last_trend_run = get_last_run("CivicEd", "TrendAnalysis")
         if (current_time - last_trend_run) > TREND_ANALYSIS_INTERVAL_SECONDS:
             broadcast_event("SYNC", "CivicEd", "Lancio analisi dei trend legali in corso...")
-            try:
-                # Esegue la logica
-                # advanced_civic_education_pipeline.run_guardian_protocol()
-                supabase.table("agent_memory").insert({"agent_name":"CivicEd","task_type":"TrendAnalysis","status":"PROCESSING","details":{}}).execute()
-                log_agent_memory("CivicEd", "TrendAnalysis", "SUCCESS", {"items_generated": 1})
-                broadcast_event("SUCCESS", "CivicEd", "Analisi completata. Memoria aggiornata.")
-            except Exception as e:
-                broadcast_event("ERROR", "CivicEd", f"Fallimento: {e}")
-                log_agent_memory("CivicEd", "TrendAnalysis", "ERROR", {"error": str(e)})
+            if use_rq:
+                task_queue.enqueue(run_civic_trend_analysis)
+                broadcast_event("SUCCESS", "CivicEd", "Task accodato in Redis (RQ).")
+            else:
+                try:
+                    run_civic_trend_analysis()
+                    broadcast_event("SUCCESS", "CivicEd", "Analisi completata. Memoria aggiornata.")
+                except Exception as e:
+                    sentry_sdk.capture_exception(e)
+                    broadcast_event("ERROR", "CivicEd", f"Fallimento: {e}")
+                    log_agent_memory("CivicEd", "TrendAnalysis", "ERROR", {"error": str(e)})
         else:
             time_left = int(TREND_ANALYSIS_INTERVAL_SECONDS - (current_time - last_trend_run))
             # Optional: don't broadcast cooldowns to avoid spam, just print.
@@ -112,15 +166,17 @@ def run_orchestrator():
         last_guardian_run = get_last_run("Guardian", "LegalTrapScan")
         if (current_time - last_guardian_run) > GUARDIAN_SCAN_INTERVAL_SECONDS:
             broadcast_event("SYNC", "Guardian", "Scansione anomalie legislative su Gazzetta Ufficiale...")
-            try:
-                # Per il test, passiamo una mock law fittizia diversa per dimostrare l'autonomia
-                mock_scan_result = f"Gazzetta Ufficiale: Introdotta nuova tassa occulta sui prelievi Bancomat superiori a 50 euro, con effetto immediato da oggi. Trattenuta automatica del 5%."
-                citizen_guardian_protocol.trigger_citizen_protection_alert(mock_scan_result)
-                log_agent_memory("Guardian", "LegalTrapScan", "SUCCESS", {"threat_found": True})
-                broadcast_event("WARNING", "Guardian", "Anomalia rilevata! Citizen Protection Protocol attivato.")
-            except Exception as e:
-                broadcast_event("ERROR", "Guardian", f"Fallimento: {e}")
-                log_agent_memory("Guardian", "LegalTrapScan", "ERROR", {"error": str(e)})
+            if use_rq:
+                task_queue.enqueue(run_legal_trap_scan)
+                broadcast_event("SUCCESS", "Guardian", "Task accodato in Redis (RQ).")
+            else:
+                try:
+                    run_legal_trap_scan()
+                    broadcast_event("WARNING", "Guardian", "Anomalia rilevata! Citizen Protection Protocol attivato.")
+                except Exception as e:
+                    sentry_sdk.capture_exception(e)
+                    broadcast_event("ERROR", "Guardian", f"Fallimento: {e}")
+                    log_agent_memory("Guardian", "LegalTrapScan", "ERROR", {"error": str(e)})
         else:
             time_left = int(GUARDIAN_SCAN_INTERVAL_SECONDS - (current_time - last_guardian_run))
             print(f"[ ] Job 'LegalTrapScan' in cooldown. Prossima esecuzione tra {time_left}s")
@@ -130,14 +186,17 @@ def run_orchestrator():
         # Per test immediato forziamo a 60 secondi invece di 86400, in produzione usare PERPLEXITY_CRAWL_INTERVAL_SECONDS
         if (current_time - last_perplexity_run) > 600: # 10 mins per test
             broadcast_event("SYNC", "PerplexityCrawler", "Avvio ricerca autonoma sentenze web (Perplexity Sonar)...")
-            try:
-                agent = picoclaw_perplexity_ingest.PerplexityAgent()
-                agent.run_pipeline()
-                log_agent_memory("PerplexityCrawler", "AutoIngest", "SUCCESS", {})
-                broadcast_event("SUCCESS", "PerplexityCrawler", "Acquisizione nuove sentenze completata.")
-            except Exception as e:
-                broadcast_event("ERROR", "PerplexityCrawler", f"Fallimento: {e}")
-                log_agent_memory("PerplexityCrawler", "AutoIngest", "ERROR", {"error": str(e)})
+            if use_rq:
+                task_queue.enqueue(run_perplexity_auto_ingest)
+                broadcast_event("SUCCESS", "PerplexityCrawler", "Task accodato in Redis (RQ).")
+            else:
+                try:
+                    run_perplexity_auto_ingest()
+                    broadcast_event("SUCCESS", "PerplexityCrawler", "Acquisizione nuove sentenze completata.")
+                except Exception as e:
+                    sentry_sdk.capture_exception(e)
+                    broadcast_event("ERROR", "PerplexityCrawler", f"Fallimento: {e}")
+                    log_agent_memory("PerplexityCrawler", "AutoIngest", "ERROR", {"error": str(e)})
         else:
              time_left = int(600 - (current_time - last_perplexity_run))
              print(f"[ ] Job 'PerplexityCrawler' in cooldown. Prossima esecuzione tra {time_left}s")
@@ -154,15 +213,24 @@ def run_orchestrator():
                     
                     title = os.path.splitext(filename)[0].replace("_", " ").title()
                     
-                    # Esecuzione Ingestion
-                    multimodal_agent = advanced_multimodal_ingestion.MultimodalIngestor()
-                    multimodal_agent.process_file(file_path, title, mime_type)
-                    
-                    # Spostamento in processed
-                    processed_path = os.path.join(PROCESSED_PATH, filename)
-                    shutil.move(file_path, processed_path)
-                    broadcast_event("SUCCESS", "Hotfolder", f"File spostato in archivio elaborati: {filename}")
+                    try:
+                        if use_rq:
+                            task_queue.enqueue(run_multimodal_ingestor, file_path, title, mime_type)
+                            broadcast_event("SUCCESS", "Hotfolder", f"File accodato in RQ: {filename}")
+                        else:
+                            # Esecuzione Ingestion
+                            run_multimodal_ingestor(file_path, title, mime_type)
+                            
+                            # Spostamento in processed
+                            processed_path = os.path.join(PROCESSED_PATH, filename)
+                            shutil.move(file_path, processed_path)
+                            broadcast_event("SUCCESS", "Hotfolder", f"File spostato in archivio elaborati: {filename}")
+                    except Exception as child_e:
+                        sentry_sdk.capture_exception(child_e)
+                        broadcast_event("ERROR", "Hotfolder", f"Fallimento elaborazione {filename}: {child_e}")
+
         except Exception as e:
+            sentry_sdk.capture_exception(e)
             broadcast_event("ERROR", "Hotfolder", f"Errore Hotfolder Watchdog: {e}")
 
         # broadcast_event("INFO", "SYSTEM", f"Standby per {DAEMON_INTERVAL_SECONDS} secondi...")

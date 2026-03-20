@@ -172,68 +172,29 @@ export default function AtenaApp() {
       )}
 
       <main className="flex-1 relative z-10 w-full flex flex-col items-center">
-        {user ? (
-           /* ============================================ */
-           /* WORKSPACE MODE (LOGGED IN)                   */
-           /* ============================================ */
-           <div className="w-full">
-              <WorkspaceLayout 
-                 user={user} 
-                 onRequireAuth={() => setShowAuthModal(true)} 
-                 onRequirePro={() => setShowSubscriptionModal(true)} 
-              />
-           </div>
-        ) : (
-           /* ============================================ */
-           /* LANDING PAGE (NOT LOGGED IN)                 */
-           /* ============================================ */
-           <div className="w-full max-w-5xl px-4 flex flex-col">
-              
-              {/* HERO SECTION (2-Column Premium Layout) */}
-              <section className="w-full max-w-6xl mx-auto mt-20 mb-20 flex flex-col md:flex-row items-center gap-12 animate-fade-in-up px-4">
-                {/* Text Content */}
-                <div className="flex-1 text-center md:text-left">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-marble-200 bg-white/50 mb-8 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.05)]">
-                    <span className="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
-                    <span className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">Esclusiva Sperimentale Privata</span>
+        
+        {/* PLG HERO: WORKSPACE FOR EVERYONE */}
+        <div className="w-full relative">
+           <WorkspaceLayout 
+              user={user} 
+              onRequireAuth={() => setShowAuthModal(true)} 
+              onRequirePro={() => setShowSubscriptionModal(true)} 
+           />
+           {/* Hint to scroll down for guests */}
+           {!user && (
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-bounce cursor-pointer" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
+                  <div className="bg-white/80 backdrop-blur-md border border-marble-200 px-4 py-2 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.1)] flex items-center gap-2 hover:bg-white transition-colors">
+                     <span className="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
+                     <span className="text-[10px] uppercase font-bold tracking-widest text-slate-600">Scopri Atena Integrations</span>
+                     <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
                   </div>
-                  <div className="mb-6 max-w-[280px] md:max-w-xs mx-auto md:mx-0">
-                    <Image src="/atena-logo-new.jpeg" alt="Atena" width={300} height={100} priority className="object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] mix-blend-multiply" style={{ width: 'auto', height: 'auto' }} />
-                  </div>
-                  <p className="text-xl md:text-2xl text-slate-700 max-w-xl md:mx-0 mx-auto font-light leading-relaxed mb-8">
-                    L&apos;Assistente Supremo per la <strong className="text-slate-900 font-playfair font-bold">Ricerca Giuridica</strong> e l&apos;Analisi Normativa Predittiva.
-                  </p>
-                  <p className="text-sm text-slate-500 max-w-md md:mx-0 mx-auto font-medium mb-10">
-                    Analisi semantica di Costituzione, Codici e Giurisprudenza fusa in un unico motore IA cristallino dal paradigma generativo.
-                  </p>
+              </div>
+           )}
+        </div>
 
-                  <button 
-                     onClick={() => setShowAuthModal(true)}
-                     className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-slate-800 text-white font-bold rounded-[24px] hover:bg-slate-700 transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.15)] hover:-translate-y-1 active:translate-y-0 w-full sm:w-auto"
-                  >
-                     <Sparkles className="w-5 h-5" />
-                     Entra nel Workspace 
-                  </button>
-                </div>
-                
-                {/* 3D Visual Graphic */}
-                <div className="flex-1 relative flex justify-center items-center">
-                  <div className="absolute inset-0 bg-marble-200/50 blur-[100px] rounded-full scale-110"></div>
-                  
-                  <div className="relative z-10 animate-float">
-                    <div className="rounded-[40px] overflow-hidden border border-marble-200 shadow-[0_20px_50px_rgba(0,0,0,0.05)] relative bg-white/80 backdrop-blur-xl p-4 squircle-lg">
-                      <Image 
-                        src="/atena-logo-new.jpeg" 
-                        alt="Atena Legal AI - Goddess Logo" 
-                        width={400} 
-                        height={400}
-                        className="object-cover w-full h-auto max-w-sm md:max-w-md squircle !shadow-none mix-blend-multiply"
-                        priority
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
+        {/* MARKETING SECTION FOR GUESTS (BELOW THE FOLD) */}
+        {!user && (
+           <div className="w-full max-w-5xl px-4 flex flex-col mt-24">
 
               {/* LIVE STATS BAR */}
               <section className="w-full max-w-5xl mx-auto mb-20 relative">

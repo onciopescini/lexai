@@ -9,19 +9,43 @@ import { PicoClawAgent } from '@/lib/agents/PicoClawAgent';
 import { TenthManAgent, TenthManInput } from '@/lib/agents/TenthManAgent';
 import { LiveWebAgent, LiveWebInput } from '@/lib/agents/LiveWebAgent';
 import { findCachedKnowledge, cacheKnowledge } from '@/lib/knowledgeCache';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Consenti fino a 60 secondi per l'esecuzione del pipeline RAG complesso su Vercel
 
-// Semplice Rate Limiter in-memory (per istanza serverless) per prevenire abusi base
+// Inizializzazione Redis (Upstash) per Rate Limiting distribuito su Vercel Edge
+const redisOptions = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  ? { url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN }
+  : null;
+
+const redisClient = redisOptions ? new Redis(redisOptions) : null;
+
+const upstashRateLimit = redisClient ? new Ratelimit({
+  redis: redisClient,
+  limiter: Ratelimit.slidingWindow(10, '1 m'),
+  analytics: true,
+}) : null;
+
+// Semplice Rate Limiter in-memory fallback (per ambiente locale locale o assenza variabili Upstash)
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minuto
 const MAX_REQUESTS_PER_WINDOW = 10;
 const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
+async function checkRateLimit(ip: string): Promise<boolean> {
+  // 1. Primary Distributed Limiter
+  if (upstashRateLimit) {
+     try {
+       const { success } = await upstashRateLimit.limit(`ratelimit_${ip}`);
+       return success;
+     } catch (err) {
+       console.warn("[RATE LIMIT] Fallimento connessione Redis, uso memoria locale:", err);
+     }
+  }
 
-  // Lazy cleanup to prevent memory leak on long-running lambdas
+  // 2. Fallback in-memory
+  const now = Date.now();
   if (Math.random() < 0.05) {
     for (const [key, val] of rateLimitMap.entries()) {
       if (now > val.resetTime) rateLimitMap.delete(key);
@@ -48,7 +72,8 @@ export async function POST(req: Request) {
     const forwardedFor = req.headers.get('x-forwarded-for');
     const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'anonymous';
     
-    if (!checkRateLimit(ip)) {
+    const isAllowed = await checkRateLimit(ip);
+    if (!isAllowed) {
       console.warn(`[RATE LIMIT] Richiesta bloccata per l'IP: ${ip}`);
       return NextResponse.json({ error: 'Troppe richieste. Riprova tra un minuto.' }, { status: 429 });
     }
@@ -133,7 +158,9 @@ export async function POST(req: Request) {
 
     // 1. Cercare prima solo nel database e agent memories
     console.log(`[*] Avvio ricerca database (Supabase Hybrid + Agent Memories)...`);
-    const [supabaseResult, memoryResult] = await Promise.all([
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const searchPromises: any[] = [
       supabaseAdmin.rpc('hybrid_search_legal_docs', {
         query_embedding: embedding,
         query_text: query,
@@ -147,7 +174,24 @@ export async function POST(req: Request) {
         match_threshold: 0.3,
         match_count: 3
       })
-    ]);
+    ];
+
+    if (isPremium) {
+      console.log(`[*] Utente Premium: Ricerca nei documenti personali (RAG Privato)...`);
+      searchPromises.push(
+        supabaseAdmin.rpc('match_user_documents', {
+          query_embedding: embedding,
+          match_threshold: 0.7,
+          match_count: 5,
+          p_user_id: user.id
+        })
+      );
+    }
+
+    const results = await Promise.all(searchPromises);
+    const supabaseResult = results[0];
+    const memoryResult = results[1];
+    const userDocsResult = isPremium ? results[2] : null;
 
     const { data: documents, error } = supabaseResult;
 
@@ -169,9 +213,18 @@ export async function POST(req: Request) {
       console.log('[*] Reranking skipped (Groq unavailable), using vector similarity order.');
     }
 
-    const contextText = rankedDocs.map(
+    let contextText = rankedDocs.map(
       (doc: {title: string; source_url: string; content: string}) => `FONTE UFFICIALE DB: ${doc.title} \nURL: ${doc.source_url}\nTESTO:\n${doc.content}\n---`
     ).join('\n');
+
+    // Prepend private documents if found
+    if (userDocsResult && userDocsResult.data && userDocsResult.data.length > 0) {
+      console.log(`[*] Trovati ${userDocsResult.data.length} documenti personali.`);
+      const personalDocsText = userDocsResult.data.map(
+        (doc: {title: string; content: string}) => `📁 DOCUMENTO PERSONALE (RAG Privato): ${doc.title}\nTESTO:\n${doc.content}\n---`
+      ).join('\n');
+      contextText = personalDocsText + '\n' + contextText;
+    }
 
     let agentMemoriesText = "";
     if (memoryResult && memoryResult.data && memoryResult.data.length > 0) {

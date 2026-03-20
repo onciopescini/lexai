@@ -6,6 +6,8 @@
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+import { getGenAI } from './gemini';
+
 export interface GroqMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -42,12 +44,26 @@ export async function callGroq(
   });
 
   if (!response.ok) {
+    if (response.status === 429 || response.status >= 500) {
+      console.warn(`[Groq Fallback] Error ${response.status}. Switching to Gemini-2.5-Flash...`);
+      return fallbackToGemini(messages);
+    }
     const error = await response.text();
     throw new Error(`Groq API error ${response.status}: ${error}`);
   }
 
   const data = await response.json();
   return data.choices[0]?.message?.content || '';
+}
+
+/**
+ * Fallback to Gemini when Groq is rate-limited or down.
+ */
+async function fallbackToGemini(messages: GroqMessage[]): Promise<string> {
+  const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
+  const promptText = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+  const result = await model.generateContent(promptText);
+  return result.response.text();
 }
 
 /**

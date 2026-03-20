@@ -7,8 +7,8 @@ test.describe('Atena Freemium Flow & UX Access', () => {
     await page.goto('/');
     
     // Auth Warmup: Wait for hero text, preventing hydration races
-    const heroTitle = page.locator('h1', { hasText: 'La tua mente giuridica' });
-    await expect(heroTitle).toBeVisible({ timeout: 15000 });
+    const heroText = page.locator('text=L\'Assistente Supremo per la Ricerca Giuridica');
+    await expect(heroText).toBeVisible({ timeout: 15000 });
   });
 
   test('Ecosystem Access is Gated (Premium Protection)', async ({ page }) => {

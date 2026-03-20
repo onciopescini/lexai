@@ -77,6 +77,11 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'https://www.googleapis.com/auth/drive.file',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       if (signInError) throw signInError;

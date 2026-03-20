@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 const supabase = createClient();
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer';
@@ -20,6 +20,66 @@ export default function CivicLessonsDashboard() {
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+
+  useEffect(() => {
+    workerRef.current = new Worker(new URL('@/workers/tts.worker.ts', import.meta.url));
+    
+    workerRef.current.onmessage = (e) => {
+      const { status, audio, sampling_rate, error } = e.data;
+      
+      if (status === 'complete') {
+        try {
+          if (!audioContextRef.current) {
+             const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+             audioContextRef.current = new AudioCtx({ sampleRate: sampling_rate });
+          }
+          const ctx = audioContextRef.current;
+          
+          const audioBuffer = ctx.createBuffer(1, audio.length, sampling_rate);
+          audioBuffer.getChannelData(0).set(audio);
+          
+          if (audioSourceRef.current) {
+             audioSourceRef.current.stop();
+          }
+          
+          const source = ctx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(ctx.destination);
+          source.start(0);
+          audioSourceRef.current = source;
+          
+          setIsSynthesizing(null);
+          
+          source.onended = () => {
+             setPlayingId(null);
+             audioSourceRef.current = null;
+          };
+        } catch (err) {
+          console.error("Audio playback error:", err);
+          setIsSynthesizing(null);
+          setPlayingId(null);
+        }
+      } else if (status === 'error') {
+        console.error("TTS Worker Error:", error);
+        
+        // Fallback Web Speech API
+        setIsSynthesizing(null);
+        setPlayingId(null);
+      }
+    };
+
+    workerRef.current.postMessage({ action: 'init' });
+
+    return () => {
+      workerRef.current?.terminate();
+      if (audioContextRef.current?.state !== 'closed') {
+         audioContextRef.current?.close();
+      }
+    };
+  }, []);
 
   const handleExportPDF = async (lesson: Lesson, elementId: string) => {
     try {
@@ -51,40 +111,67 @@ export default function CivicLessonsDashboard() {
 
   const handleAtenaVoice = async (lesson: Lesson) => {
     if (playingId === lesson.id) {
+       // Stop audio playback
+       if (audioSourceRef.current) {
+          audioSourceRef.current.stop();
+          audioSourceRef.current = null;
+       }
        window.speechSynthesis.cancel();
        setPlayingId(null);
        return;
     }
     
     // Ferma eventuali altri audio
+    if (audioSourceRef.current) {
+       audioSourceRef.current.stop();
+    }
     window.speechSynthesis.cancel();
     
     setIsSynthesizing(lesson.id);
+    setPlayingId(lesson.id);
     
     try {
-       // Nella versione finale di produzione qui inizializziamo Kokoro-js in un WebWorker
-       // Per mantenere UI reattiva e 100% Client-Side Privacy:
-       // const { pipeline } = await import('@huggingface/transformers');
-       // const synthesizer = await pipeline('text-to-speech', 'hexgrad/Kokoro-82M');
+       const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
        
-       // Fallback garantito zero-latency per Web
-       setTimeout(() => {
-          const utterance = new SpeechSynthesisUtterance(lesson.ai_response.replace(/[#*_>]/g, ''));
-          utterance.lang = 'it-IT';
-          utterance.rate = 1.05;
-          utterance.pitch = 0.95; // Voce leggermente più profonda/professionale
+       if (isMobile) {
+          console.log("[Atena Voice] Modalità Mobile Rilevata. Utilizzo Edge API TTS...");
+          const res = await fetch('/api/tts/cloud', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: lesson.ai_response.replace(/[#*_>]/g, '') })
+          });
           
-          utterance.onstart = () => {
-             setIsSynthesizing(null);
-             setPlayingId(lesson.id);
+          if (!res.ok) throw new Error("TTS Edge API Failed");
+          
+          const { audio, sampling_rate } = await res.json();
+          setIsSynthesizing(null);
+          
+          const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          if (!audioContextRef.current) audioContextRef.current = new AudioCtx({ sampleRate: sampling_rate });
+          
+          const ctx = audioContextRef.current;
+          const audioBuffer = ctx.createBuffer(1, audio.length, sampling_rate);
+          audioBuffer.getChannelData(0).set(new Float32Array(audio));
+          
+          const source = ctx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(ctx.destination);
+          source.start(0);
+          audioSourceRef.current = source;
+          
+          source.onended = () => {
+             setPlayingId(null);
+             audioSourceRef.current = null;
           };
-          utterance.onend = () => setPlayingId(null);
-          utterance.onerror = () => { setIsSynthesizing(null); setPlayingId(null); };
-          
-          window.speechSynthesis.speak(utterance);
-       }, 500); // Simulazione caricamento modello neurale
+       } else {
+          console.log("[Atena Voice] Modalità Desktop Rilevata. Utilizzo Local Web Worker TTS...");
+          workerRef.current?.postMessage({
+             action: 'speak',
+             text: lesson.ai_response.replace(/[#*_>]/g, '')
+          });
+       }
     } catch(err) {
-       console.error("TTS Error:", err);
+       console.error("TTS Launch Error:", err);
        setIsSynthesizing(null);
        setPlayingId(null);
     }

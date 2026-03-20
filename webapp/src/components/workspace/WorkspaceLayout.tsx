@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Sparkles, Search, X, FileText, Share2, Layers, GitCompare } from 'lucide-react';
+import { Sparkles, Search, X, FileText, Share2, Layers, GitCompare, Cloud, Mail } from 'lucide-react';
 import MarkdownRenderer from '../ui/MarkdownRenderer';
 import LegalFactCheck from '../stateful/LegalFactCheck';
 import ThinkingIndicator from '../ui/ThinkingIndicator';
@@ -57,10 +57,78 @@ export default function WorkspaceLayout({
   
   const isPremium = user?.user_metadata?.is_premium === true;
   const [freeQueriesUsed, setFreeQueriesUsed] = useState<number>(user?.user_metadata?.free_queries_used || 0);
+  const [guestQueriesUsed, setGuestQueriesUsed] = useState<number>(0);
+  
+  useEffect(() => {
+    // Load auth-less trial count from localStorage
+    if (!user) {
+        const stored = localStorage.getItem('atena_guest_queries');
+        if (stored) setGuestQueriesUsed(parseInt(stored, 10));
+    }
+  }, [user]);
+
   const freeQueriesLeft = Math.max(0, 10 - freeQueriesUsed);
+  const guestQueriesLeft = Math.max(0, 3 - guestQueriesUsed);
 
   // Canvas State (Stitch 2.0 Paradigm)
   const [activeArtifact, setActiveArtifact] = useState<ActiveArtifact | null>(null);
+  
+  // Export states
+  const [exportingIndex, setExportingIndex] = useState<{ drive?: number, mail?: number }>({});
+
+  const handleDriveExport = async (content: string, index: number) => {
+    if (!user) return onRequireAuth();
+    if (!isPremium) return onRequirePro();
+
+    setExportingIndex(prev => ({ ...prev, drive: index }));
+    try {
+       const res = await fetch('/api/export/drive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+             content: content, 
+             title: `Atena_Sintesi_${new Date().toISOString().split('T')[0]}.md`,
+             mimeType: 'text/markdown'
+          })
+       });
+       const data = await res.json();
+       if (data.error) {
+          alert('Errore esportazione Drive: ' + data.error);
+       } else {
+          alert('Salvato con successo su Google Drive! 📁');
+       }
+    } catch (e) {
+       console.error(e);
+       alert('Impossibile comunicare con il server per l\'esportazione.');
+    } finally {
+       setExportingIndex(prev => ({ ...prev, drive: undefined }));
+    }
+  };
+
+  const handleEmailExport = async (content: string, index: number) => {
+    if (!user) return onRequireAuth();
+    if (!isPremium) return onRequirePro();
+
+    setExportingIndex(prev => ({ ...prev, mail: index }));
+    try {
+       const res = await fetch('/api/export/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+       });
+       const data = await res.json();
+       if (data.error) {
+          alert('Errore esportazione Email: ' + data.error);
+       } else {
+          alert('Email inviata con successo! ✉️');
+       }
+    } catch (e) {
+       console.error(e);
+       alert('Impossibile comunicare con il server per l\'esportazione via mail.');
+    } finally {
+       setExportingIndex(prev => ({ ...prev, mail: undefined }));
+    }
+  };
 
   // Altri stati
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,6 +144,12 @@ export default function WorkspaceLayout({
 
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!user) {
+       // Guests cannot upload files
+       alert("Devi registrarti gratuitamente per analizzare documenti PDF.");
+       return onRequireAuth();
+    }
 
     if (file.type !== 'application/pdf') {
        alert("Si prega di caricare solo file PDF per l'analisi.");
@@ -120,9 +194,19 @@ export default function WorkspaceLayout({
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return onRequireAuth();
-    if (!isPremium && freeQueriesLeft <= 0) return onRequirePro();
     if (!query.trim()) return;
+
+    if (!user) {
+        if (guestQueriesLeft <= 0) {
+            return onRequireAuth();
+        } else {
+            const newCount = guestQueriesUsed + 1;
+            setGuestQueriesUsed(newCount);
+            localStorage.setItem('atena_guest_queries', newCount.toString());
+        }
+    } else {
+        if (!isPremium && freeQueriesLeft <= 0) return onRequirePro();
+    }
 
     const userQuery = query;
     setMessages(prev => [...prev, { role: 'user', content: userQuery }]);
@@ -339,6 +423,18 @@ export default function WorkspaceLayout({
                                   <Sparkles className="w-3.5 h-3.5" /> Visual Intelligence
                                 </button>
                               )}
+
+                              {/* EXPORT ACTIONS */}
+                              <div className="ml-auto flex gap-2">
+                                 <button onClick={() => handleDriveExport(message.content, idx)} disabled={exportingIndex.drive === idx} className="px-3 py-1.5 rounded-[20px] border border-marble-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm bg-white">
+                                    <Cloud className={`w-3.5 h-3.5 ${exportingIndex.drive === idx ? 'animate-bounce' : ''}`} /> 
+                                    {exportingIndex.drive === idx ? 'Salvataggio...' : 'Drive'}
+                                 </button>
+                                 <button onClick={() => handleEmailExport(message.content, idx)} disabled={exportingIndex.mail === idx} className="px-3 py-1.5 rounded-[20px] border border-marble-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm bg-white">
+                                    <Mail className={`w-3.5 h-3.5 ${exportingIndex.mail === idx ? 'animate-pulse' : ''}`} /> 
+                                    {exportingIndex.mail === idx ? 'Invio...' : 'Email'}
+                                 </button>
+                              </div>
                            </div>
                          </div>
                        </div>
@@ -385,10 +481,16 @@ export default function WorkspaceLayout({
                    </button>
                  )}
                  
-                 {!isPremium && (
+                 {(!isPremium && user) && (
                    <div className="ml-auto px-3 py-1.5 rounded-[24px] bg-white text-[10px] font-bold text-slate-500 flex items-center gap-1.5 border border-marble-200 shadow-sm whitespace-nowrap hidden sm:flex">
                      <div className={`w-1.5 h-1.5 rounded-full ${freeQueriesLeft > 0 ? 'bg-emerald-400' : 'bg-rose-500'} ${freeQueriesLeft > 0 ? 'animate-pulse' : ''} shadow-sm`}></div>
                      {freeQueriesLeft} / 10 Free
+                   </div>
+                 )}
+                 {!user && (
+                   <div className="ml-auto px-3 py-1.5 rounded-[24px] bg-white text-[10px] font-bold text-slate-500 flex items-center gap-1.5 border border-marble-200 shadow-sm whitespace-nowrap hidden sm:flex cursor-pointer hover:bg-marble-50" onClick={onRequireAuth}>
+                     <div className={`w-1.5 h-1.5 rounded-full ${guestQueriesLeft > 0 ? 'bg-blue-400' : 'bg-rose-500'} ${guestQueriesLeft > 0 ? 'animate-pulse' : ''} shadow-sm`}></div>
+                     {guestQueriesLeft} / 3 Trial
                    </div>
                  )}
                </div>

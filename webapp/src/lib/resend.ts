@@ -107,6 +107,46 @@ function subscriptionUpdatedHTML(email: string, status: string): string {
     </p>
   </div>
 </body>
+  </div>
+</body>
+</html>`;
+}
+
+function legalExportHTML(email: string, content: string): string {
+  // Simple markdown to HTML for email (basic)
+  const formattedContent = content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n\n/g, '</p><p style="color:#CBD5E1;font-size:16px;line-height:1.6;margin:0 0 16px;">')
+    .replace(/\n/g, '<br>');
+
+  return `
+<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#0F172A;font-family:'Segoe UI',system-ui,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-size:36px;font-weight:800;color:#D4A853;">⚖️ Atena AI</div>
+    </div>
+    <div style="background:#1E293B;border-radius:16px;padding:32px;border:1px solid #334155;">
+      <h1 style="color:#60A5FA;font-size:24px;margin:0 0 16px;">📄 Documento Esportato dal tuo Workspace</h1>
+      <p style="color:#CBD5E1;font-size:16px;line-height:1.6;margin:0 0 24px;">
+        Ecco la sintesi giuridica generata da Atena:
+      </p>
+      
+      <div style="background:#0F172A;border-radius:12px;padding:24px;border:1px solid #334155;">
+        <p style="color:#CBD5E1;font-size:16px;line-height:1.6;margin:0 0 16px;">
+          ${formattedContent}
+        </p>
+      </div>
+
+    </div>
+    <p style="color:#475569;font-size:12px;text-align:center;margin-top:24px;">
+      Richiesto da: ${email} · <a href="https://atena-lex.it" style="color:#64748B;">Torna ad Atena</a>
+    </p>
+  </div>
+</body>
 </html>`;
 }
 
@@ -165,6 +205,25 @@ export async function sendSubscriptionUpdateEmail(email: string, status: string)
     return { data, error };
   } catch (err) {
     console.error('❌ Failed to send update email:', err);
+    return { data: null, error: err };
+  }
+}
+
+export async function sendLegalExportEmail(email: string, content: string) {
+  try {
+    const resend = getResend();
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [email],
+      subject: '📄 Il tuo documento esportato da Atena',
+      html: legalExportHTML(email, content),
+      text: content,
+    });
+    if (error) console.error('❌ Resend error (export):', error);
+    else console.log(`📧 Export email sent to ${email}:`, data?.id);
+    return { data, error };
+  } catch (err) {
+    console.error('❌ Failed to send export email:', err);
     return { data: null, error: err };
   }
 }
