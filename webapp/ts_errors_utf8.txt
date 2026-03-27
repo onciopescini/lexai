@@ -1,0 +1,2 @@
+﻿src/app/api/firm/members/route.ts(52,7): error TS1128: Declaration or statement expected.
+src/components/workspace/WorkspaceLayout.tsx(481,5): error TS2657: JSX expressions must have one parent element.

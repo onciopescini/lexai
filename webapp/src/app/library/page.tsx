@@ -14,6 +14,7 @@ export default function LibraryPage() {
   const [articles, setArticles] = useState<LegalArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'vigenti' | 'storici'>('all');
   const [selectedArticle, setSelectedArticle] = useState<LegalArticle | null>(null);
   const [isDiffMode, setIsDiffMode] = useState(false);
 
@@ -41,6 +42,8 @@ export default function LibraryPage() {
 
   const filteredArticles = articles.filter(art => {
     if (activeBook !== 'all' && art.libro && art.libro !== activeBook) return false;
+    if (filterType === 'vigenti' && !art.is_vigente) return false;
+    if (filterType === 'storici' && art.is_vigente) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (art.articolo_num?.toLowerCase().includes(q) ||
@@ -77,7 +80,18 @@ export default function LibraryPage() {
               setSearchQuery={setSearchQuery}
               currentSourceTitle={currentSourceTitle}
             />
-            <div className="mt-3 flex items-end justify-between">
+            <div className="flex items-center gap-2 mt-2 mb-1">
+              {['all', 'vigenti', 'storici'].map((t) => (
+                <button 
+                  key={t}
+                  onClick={() => setFilterType(t as 'all' | 'vigenti' | 'storici')}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all ${filterType === t ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                >
+                  {t === 'all' ? 'Tutti' : t === 'vigenti' ? 'Solo Vigenti' : 'Archivio Storico'}
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 flex items-end justify-between border-t border-slate-100 pt-3">
               <div>
                 <h1 className="text-lg font-bold text-slate-900 font-serif tracking-tight">
                   {currentBookTitle === 'Tutti gli Articoli' ? currentSourceTitle : currentBookTitle || currentSourceTitle}

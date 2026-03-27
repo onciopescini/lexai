@@ -3,9 +3,9 @@
 @import "tailwindcss";
 
 /* ============================================================
-   ATENA — Light Glassmorphism Design System 2026
-   Philosophy: Calm Legal Intelligence · Clarity · Trust
-   Inspiration: Stripe Atlas, Ironclad, Clio, Notion
+   ATENA — Compagno di Trincea Design System 2026
+   Philosophy: Stealth · Speed · Precision
+   Inspiration: Notion Dark Mode, Linear, Apple HIG
    ============================================================ */
 
 @theme {
@@ -15,27 +15,27 @@
   --font-serif: 'Libre Baskerville', Georgia, serif;
 
   /* ── Base Backgrounds ── */
-  --color-bg-base:    #F7F7F5; /* warm off-white — Notion-esque */
-  --color-bg-surface: rgba(255, 255, 255, 0.82);
-  --color-bg-elevated:rgba(255, 255, 255, 0.95);
+  --color-bg-base:    #1C1C1E; /* Slate dark */
+  --color-bg-surface: rgba(28, 28, 30, 0.82);
+  --color-bg-elevated:rgba(44, 44, 46, 0.95);
 
   /* ── Glass System ── */
   --glass-blur:   20px;
   --glass-blur-lg:32px;
-  --glass-border: rgba(0, 0, 0, 0.07);
-  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  --glass-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --glass-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.6);
 
   /* ── Text ── */
-  --color-text-primary:   #0F172A; /* slate-900 — maximum legibility */
-  --color-text-secondary: #64748B; /* slate-500 */
-  --color-text-tertiary:  #94A3B8; /* slate-400 */
-  --color-text-inverse:   #FFFFFF;
+  --color-text-primary:   #FFFFFF;
+  --color-text-secondary: #98989D;
+  --color-text-tertiary:  #636366;
+  --color-text-inverse:   #000000;
 
-  /* ── Legal Gold (Premium only) ── */
-  --color-legal-gold:       #C9A84C;
-  --color-legal-gold-light: #F0E9D6;
-  --color-legal-gold-dark:  #9C7A2A;
+  /* ── Legal Gold (Premium only) -> Now Electric Blue for Trincea ── */
+  --color-legal-gold:       #007AFF;
+  --color-legal-gold-light: rgba(0, 122, 255, 0.15);
+  --color-legal-gold-dark:  #0056B3;
 
   /* ── Marble & Stone (legacy compat) ── */
   --color-marble-50:   #FAFAF8;
@@ -104,8 +104,8 @@ html {
 }
 
 body {
-  background-color: #F7F7F5;
-  color: #0F172A;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
   font-family: 'Inter', system-ui, sans-serif;
   min-height: 100vh;
 }
@@ -117,7 +117,7 @@ body {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background-color: #F7F7F5;
+  background-color: var(--color-bg-base);
 }
 
 .premium-content {
@@ -133,35 +133,35 @@ body {
 
 /* Base glass card — the fundamental building block */
 .glass-card {
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--color-bg-surface);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   transition: box-shadow 200ms ease, border-color 200ms ease;
 }
 
 .glass-card:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 0, 0, 0.10);
+  box-shadow: var(--glass-shadow-lg);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Panel — for sidebars and sticky headers */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(28, 28, 30, 0.92);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
-  border-color: rgba(0, 0, 0, 0.06);
-  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.06);
+  border-color: var(--glass-border);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Modal overlay glass */
 .glass-modal {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(44, 44, 46, 0.88);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
 }
 
 /* ============================================================
@@ -170,11 +170,11 @@ body {
 .shimmer-gold {
   background: linear-gradient(
     90deg,
-    #9C7A2A 0%,
-    #C9A84C 40%,
-    #E8D5A0 50%,
-    #C9A84C 60%,
-    #9C7A2A 100%
+    #0056B3 0%,
+    #007AFF 40%,
+    #5AC8FA 50%,
+    #007AFF 60%,
+    #0056B3 100%
   );
   background-size: 200% auto;
   background-clip: text;
@@ -203,9 +203,9 @@ body {
    LEGAL GOLD ACCENT — badge, CTA, active states
    ============================================================ */
 .gold-badge {
-  background: #F0E9D6;
-  color: #9C7A2A;
-  border: 1px solid rgba(201, 168, 76, 0.25);
+  background: rgba(0, 122, 255, 0.15);
+  color: #5AC8FA;
+  border: 1px solid rgba(0, 122, 255, 0.3);
   font-family: 'DM Mono', monospace;
   font-size: 0.65rem;
   font-weight: 600;
@@ -216,14 +216,14 @@ body {
 }
 
 .gold-btn {
-  background: #C9A84C;
+  background: #007AFF;
   color: #FFFFFF;
-  border: 1px solid #9C7A2A;
+  border: 1px solid #0056B3;
   transition: background 150ms ease, transform 100ms ease;
 }
 
 .gold-btn:hover {
-  background: #B8922F;
+  background: #006CE6;
   transform: translateY(-1px);
 }
 
@@ -242,19 +242,19 @@ body {
   border-radius: 0.625rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #64748B;
+  color: var(--color-text-secondary);
   transition: background 150ms ease, color 150ms ease;
   cursor: pointer;
 }
 
 .sidebar-nav-item:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: #0F172A;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-primary);
 }
 
 .sidebar-nav-item.active {
-  background: #F0E9D6;
-  color: #9C7A2A;
+  background: rgba(0, 122, 255, 0.15);
+  color: #5AC8FA;
   font-weight: 600;
 }
 

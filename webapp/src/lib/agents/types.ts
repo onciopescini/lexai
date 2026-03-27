@@ -2,6 +2,7 @@ export interface AgentContext {
   history?: { role: string; content: string }[];
   documents?: string; // e.g., retrieved RAG context
   systemMemories?: string;
+  inlineData?: { data: string; mimeType: string }; // For Multimodal (Vision/Audio)
 }
 
 export interface AgentInput {

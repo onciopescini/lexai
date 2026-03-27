@@ -1,10 +1,12 @@
+// FIX C2: Whitelist dell'origin per prevenire SSRF / Open Redirect
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getSafeOrigin } from '@/lib/security';
 
 // Force dynamic rendering — this route should never be pre-rendered
 export const dynamic = 'force-dynamic';
 
-// Atena Premium Price ID (created on CashClaw Stripe account)
+// Atena Premium Price ID
 const ATENA_PREMIUM_PRICE_ID = 'price_1TBfvNE4aoOpLqyMTPrMTbwd';
 
 function getStripe() {
@@ -30,25 +32,32 @@ export async function POST(req: Request) {
       );
     }
 
-    const { email } = body;
+    // Validate email format loosely
+    const { email, trial } = body;
+    if (typeof email !== 'string' || !email.includes('@') || email.length > 254) {
+      return NextResponse.json({ error: 'Email non valida.' }, { status: 400 });
+    }
+
     const stripe = getStripe();
 
-    // Use origin header with fallback to production domain
-    const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || 'https://atena-lex.it';
+    // ── C2 FIX: Validate origin against whitelist before using as redirect URL ──
+    const rawOrigin = req.headers.get('origin') || req.headers.get('referer');
+    const safeOrigin = getSafeOrigin(rawOrigin);
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
-      customer_email: email,
-      line_items: [
-        {
-          price: ATENA_PREMIUM_PRICE_ID,
-          quantity: 1,
-        },
-      ],
+      customer_email: email.toLowerCase().trim(),
+      line_items: [{ price: ATENA_PREMIUM_PRICE_ID, quantity: 1 }],
       mode: 'subscription',
-      success_url: `${origin}/?checkout=success`,
-      cancel_url: `${origin}/?checkout=cancel`,
-    });
+      success_url: `${safeOrigin}/?checkout=success`,
+      cancel_url: `${safeOrigin}/?checkout=cancel`,
+    };
+
+    if (trial === true) {
+      sessionConfig.subscription_data = { trial_period_days: 3 };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return NextResponse.json({ url: session.url });
   } catch (err: unknown) {

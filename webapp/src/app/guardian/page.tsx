@@ -21,6 +21,16 @@ export default function GuardianFeed() {
   const [alerts, setAlerts] = useState<GuardianAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState('Tech Startup (SaaS)');
+  const [subscriptions, setSubscriptions] = useState<Record<string, boolean>>({
+    'Privacy & GDPR': true,
+    'Fiscale': true,
+    'Diritto del Lavoro': true,
+    'Contrattualistica': false,
+  });
+
+  const toggleSub = (sub: string) => {
+    setSubscriptions(prev => ({ ...prev, [sub]: !prev[sub] }));
+  };
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -175,6 +185,26 @@ export default function GuardianFeed() {
             {/* Radar Chart */}
             <div className="lg:col-span-1">
               <GuardianRadarChart label={`Radar — ${profile}`} />
+            </div>
+          </div>
+
+          {/* Subscription toggles */}
+          <div className="mb-10 bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-[24px] p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <IconShieldCheck size={20} className="text-indigo-500" />
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Aree di Monitoraggio Attive</h3>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {Object.keys(subscriptions).map(sub => (
+                <button
+                  key={sub}
+                  onClick={() => toggleSub(sub)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${subscriptions[sub] ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'} flex items-center gap-2`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${subscriptions[sub] ? 'bg-indigo-500 animate-pulse' : 'bg-slate-300'}`} />
+                  {sub}
+                </button>
+              ))}
             </div>
           </div>
 

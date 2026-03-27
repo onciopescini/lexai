@@ -3,341 +3,249 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Scale, BrainCircuit, Sparkles, Globe, ShieldAlert, Palette, GitCompare } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Scale, BrainCircuit, Sparkles, Globe, ShieldAlert, GitCompare, ArrowRight, ChevronRight, Zap } from 'lucide-react';
 import AuthModal from '../components/ui/AuthModal';
-import SubscriptionModal from '../components/ui/SubscriptionModal';
-import WorkspaceLayout from '../components/workspace/WorkspaceLayout';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { NumberTicker, BlurFadeIn, TypewriterLoop } from '../components/ui/MicroInteractions';
+import { useRouter } from 'next/navigation';
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+};
 
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
 
-// Feature Card Component
-function FeatureCard({ icon: Icon, title, description, tag }: { icon: React.ElementType; title: string; description: string; tag?: string }) {
-  return (
-    <div className="group relative p-8 rounded-[32px] bg-white/60 backdrop-blur-2xl border border-marble-200 hover:border-platinum-300/50 hover:bg-white/80 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-500 overflow-hidden">
-      <div className="absolute top-0 right-0 w-40 h-40 bg-platinum-200/50 rounded-full filter blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2.5 rounded-[24px] bg-white/50 border border-marble-200 group-hover:border-platinum-300 group-hover:bg-platinum-100/50 transition-colors duration-500">
-            <Icon className="w-6 h-6 text-slate-700 drop-shadow-[0_0_8px_rgba(0,0,0,0.1)]" strokeWidth={1.5} />
-          </div>
-          {tag && (
-            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-marble-200">{tag}</span>
-          )}
-        </div>
-        <h3 className="text-xl font-playfair font-bold text-slate-800 mb-2">{title}</h3>
-        <p className="text-sm font-light text-slate-500 leading-relaxed">{description}</p>
-      </div>
-    </div>
-  );
-}
-
-// 3-Step Process Component
-function ProcessStep({ step, title, description }: { step: number; title: string; description: string }) {
-  return (
-    <div className="flex flex-col items-center text-center group">
-      <div className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-white to-marble-100 flex items-center justify-center text-2xl font-playfair font-black text-slate-800 shadow-[0_8px_20px_rgba(0,0,0,0.1)] border border-marble-200 group-hover:scale-110 group-hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] group-hover:border-platinum-300 transition-all duration-500 mb-6">
-        {step}
-      </div>
-      <h3 className="text-xl font-playfair font-bold text-slate-800 mb-3">{title}</h3>
-      <p className="text-base text-slate-500 max-w-xs leading-relaxed font-light">{description}</p>
-    </div>
-  );
-}
-
-export default function AtenaApp() {
+export default function LandingPage() {
   const [user, setUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [authChecking, setAuthChecking] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+  const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-      setAuthChecking(false);
     };
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) setShowAuthModal(false);
+      if (session?.user) {
+         setShowAuthModal(false);
+         router.push('/workspace');
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
-
-  if (authChecking) {
-    return (
-      <div className="min-h-screen bg-marble-50 flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-amber-legal/20 border-t-amber-legal animate-spin" />
-      </div>
-    );
-  }
+  }, [supabase.auth, router]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-transparent text-slate-900 font-sans selection:bg-platinum-200 overflow-x-hidden">
+    <div className="min-h-screen bg-[#1C1C1E] text-white font-sans overflow-x-hidden selection:bg-[#007AFF]/30 selection:text-white">
       
-      {/* Navbar Minimal - Fixed at Top */}
-      <nav className="w-full h-[80px] flex items-center justify-between px-6 max-w-[1400px] mx-auto border-b border-marble-200 shrink-0 z-50 bg-white/80 backdrop-blur-2xl sticky top-0 transition-all duration-300">
-        <Link href="/" className="flex items-center gap-3 group">
-          <Image src="/atena-logo.png" alt="Atena — AI Legal Intelligence" width={110} height={35} className="object-contain group-hover:scale-105 transition-transform" priority style={{ width: 'auto', height: 'auto' }} />
-        </Link>
-        <div className="flex items-center gap-7 text-sm font-bold text-slate-500 hidden lg:flex">
-          {!user && (
-             <>
-                <Link href="/library" className="hover:text-slate-800 transition-colors flex items-center gap-1.5 pb-1">
-                   Biblioteca Legale
-                </Link>
-                <Link href="/diff-demo" className="hover:text-slate-800 transition-colors flex items-center gap-1.5 pb-1">
-                   Version Diff
-                </Link>
-                <a href="#features" className="hover:text-slate-800 transition-colors">Funzionalità</a>
-                <Link href="/guardian" className="text-rose-500 hover:text-rose-600 transition-colors font-semibold flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_5px_rgba(244,63,94,0.4)]"></span>
-                  Guardian Alerts
-                </Link>
-             </>
-          )}
-          
-          <div className="w-px h-5 bg-marble-200 ml-2"></div>
-          
-          {user ? (
-            <div className="flex items-center gap-4 ml-2">
-              {user.user_metadata?.is_premium ? (
-                <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-[14px]">
-                  PREMIUM ✨
-                </span>
-              ) : (
-                <button 
-                  onClick={() => setShowSubscriptionModal(true)}
-                  className="text-xs font-black text-white bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-600 hover:to-slate-800 px-4 py-2 rounded-[14px] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-105 active:scale-95"
-                >
-                  Passa a Premium ✨
-                </button>
-              )}
-              <div className="flex items-center gap-3 pl-4 border-l border-marble-200">
-                 <div className="flex flex-col items-end">
-                    <span className="text-xs text-slate-800 uppercase tracking-wider">{user.email?.split('@')[0]}</span>
-                    <span className="text-[10px] text-slate-500">{user.user_metadata?.is_premium ? 'PREMIUM' : 'FREE'}</span>
-                 </div>
-                 <button 
-                   onClick={() => supabase.auth.signOut()}
-                   className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors bg-white hover:bg-marble-100 px-3 py-1.5 rounded-[24px] border border-marble-200"
-                 >
-                   Esci
-                 </button>
-              </div>
+      {/* ── Navbar ── */}
+      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#1C1C1E]/80 backdrop-blur-xl border-b border-white/10' : 'bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-[#007AFF] flex items-center justify-center shadow-[0_0_15px_rgba(0,122,255,0.4)]">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-          ) : (
-            <button 
-              onClick={() => setShowAuthModal(true)}
-              className="px-5 py-2.5 bg-slate-800 text-white border border-slate-700 text-xs font-bold rounded-[14px] hover:bg-slate-700 transition-all shadow-md ml-2"
-            >
-              Accedi / Registrati
-            </button>
-          )}
+            <span className="font-bold text-xl tracking-tight text-white">LexAI</span>
+          </Link>
+          
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-[#98989D]">
+            <a href="#features" className="hover:text-white transition-colors">Features</a>
+            <Link href="/library" className="hover:text-white transition-colors">Archivio Storico</Link>
+            <Link href="/guardian" className="flex items-center gap-2 hover:text-[#5AC8FA] transition-colors">
+               <span className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse" /> Guardian
+            </Link>
+          </div>
+          
+          <div className="flex items-center">
+            {user ? (
+              <button onClick={() => router.push('/workspace')} className="px-5 py-2.5 rounded-full bg-[#007AFF] text-white text-sm font-semibold hover:bg-[#006CE6] transition-colors shadow-[0_0_20px_rgba(0,122,255,0.3)]">
+                Vai al Workspace
+              </button>
+            ) : (
+              <button onClick={() => setShowAuthModal(true)} className="px-5 py-2.5 text-sm font-semibold bg-white/10 hover:bg-white/15 text-white rounded-full backdrop-blur-md transition-all border border-white/5">
+                Accedi
+              </button>
+            )}
+          </div>
         </div>
       </nav>
 
-      {/* Auth Modal Overlay */}
+      {/* ── Hero Section ── */}
+      <section className="relative pt-40 pb-20 md:pt-52 md:pb-32 overflow-hidden flex flex-col items-center justify-center text-center px-6">
+        {/* Background Gradients */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#007AFF]/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#5AC8FA]/10 rounded-full blur-[100px] pointer-events-none" />
+        
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          className="relative z-10 max-w-4xl mx-auto flex flex-col items-center"
+        >
+          <motion.div variants={fadeUp} className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 text-[#5AC8FA] text-xs font-bold uppercase tracking-wider">
+            <Zap className="w-3.5 h-3.5" /> LexAI Agentic Engine 2.0
+          </motion.div>
+          
+          <motion.div variants={fadeUp}>
+            <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
+              L'intelligenza legale.<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#007AFF] to-[#5AC8FA]">
+                Oltre il documento.
+              </span>
+            </h1>
+          </motion.div>
+
+          <motion.p variants={fadeUp} className="text-lg md:text-xl text-[#98989D] max-w-2xl mb-12 font-medium leading-relaxed">
+            Il primo compagno di trincea progettato per avvocati e professionisti.
+            Analizza codici, atti e giurisprudenza in millisecondi. Rigorosamente validato dal protocollo anti-allucinazioni <i>Decimo Uomo</i>.
+          </motion.p>
+
+          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+            <button onClick={() => setShowAuthModal(true)} className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#007AFF] text-white font-bold text-lg hover:bg-[#006CE6] transition-all shadow-[0_0_30px_rgba(0,122,255,0.4)] hover:shadow-[0_0_40px_rgba(0,122,255,0.6)] flex items-center justify-center gap-2 group hover:-translate-y-1">
+              Inizia Gratuitamente <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <button onClick={() => router.push('/guardian')} className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-lg hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+              Scopri il Guardian
+            </button>
+          </motion.div>
+        </motion.div>
+
+        {/* App Mockup Preview */}
+        <motion.div 
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-24 w-full max-w-6xl relative z-10"
+        >
+          <div className="rounded-2xl md:rounded-[32px] overflow-hidden border border-white/10 bg-[#2C2C2E] shadow-[0_20px_80px_rgba(0,0,0,0.8)] relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#007AFF]/5 to-transparent pointer-events-none" />
+            <div className="h-12 border-b border-white/5 flex items-center px-4 bg-[#1C1C1E]">
+              <div className="flex gap-2">
+                 <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                 <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                 <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+              </div>
+            </div>
+            <div className="w-full aspect-[16/9] md:aspect-[21/9] bg-[#1C1C1E] p-8 flex">
+              {/* Mockup UI Inner */}
+              <div className="w-1/3 border-r border-white/5 pr-6 hidden md:flex flex-col gap-4">
+                <div className="h-8 w-1/2 bg-white/5 rounded-lg" />
+                <div className="h-24 w-full bg-white/5 rounded-xl border border-white/5 p-4">
+                   <div className="h-4 w-1/3 bg-[#007AFF] rounded mb-2" />
+                   <div className="h-2 w-full bg-white/10 rounded mb-1" />
+                   <div className="h-2 w-2/3 bg-white/10 rounded" />
+                </div>
+                <div className="h-24 w-full bg-white/5 rounded-xl border border-white/5 p-4 opacity-50">
+                   <div className="h-4 w-1/4 bg-white/10 rounded mb-2" />
+                   <div className="h-2 w-full bg-white/5 rounded mb-1" />
+                </div>
+              </div>
+              <div className="flex-1 md:pl-8 flex flex-col justify-end gap-6">
+                 <div className="p-6 rounded-2xl bg-[#007AFF]/10 border border-[#007AFF]/20 self-start max-w-md">
+                    <div className="h-3 w-1/4 bg-[#007AFF] rounded mb-3" />
+                    <div className="h-2 w-full bg-white/20 rounded mb-2" />
+                    <div className="h-2 w-5/6 bg-white/20 rounded" />
+                 </div>
+                 <div className="p-6 rounded-2xl bg-white/5 border border-white/10 self-end max-w-lg">
+                    <div className="h-3 w-1/3 bg-[#5AC8FA] rounded mb-3" />
+                    <div className="h-2 w-full bg-white/20 rounded mb-2" />
+                    <div className="h-2 w-full bg-white/20 rounded mb-2" />
+                    <div className="h-2 w-4/5 bg-white/20 rounded" />
+                 </div>
+                 <div className="h-14 w-full bg-white/5 rounded-2xl border border-white/10 flex items-center px-4 mt-8">
+                   <div className="h-4 w-1/3 bg-white/10 rounded" />
+                 </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── Features Grid ── */}
+      <section id="features" className="py-32 px-6 max-w-7xl mx-auto">
+        <div className="text-center mb-20">
+          <h2 className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">Armi letali per la tua professione.</h2>
+          <p className="text-lg text-[#98989D] max-w-2xl mx-auto font-medium">
+            Ogni strumento in LexAI è ingegnerizzato per ridurre le ore di ricerca da giorni a millisecondi, con un'interfaccia invisibile che non si mette mai in mezzo.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-8 rounded-3xl bg-[#2C2C2E]/50 border border-white/5 hover:border-white/10 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-[#007AFF]/10 flex items-center justify-center mb-6">
+              <BrainCircuit className="w-6 h-6 text-[#5AC8FA]" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Cross-RAG Search</h3>
+            <p className="text-[#98989D] leading-relaxed">
+              Interroga simultaneamente codici pubblici e il tuo archivio privato su Google Drive. Una sola query, conoscenza infinita.
+            </p>
+          </div>
+          <div className="p-8 rounded-3xl bg-[#2C2C2E]/50 border border-white/5 hover:border-white/10 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-[#007AFF]/10 flex items-center justify-center mb-6">
+              <Scale className="w-6 h-6 text-[#5AC8FA]" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Il Decimo Uomo</h3>
+            <p className="text-[#98989D] leading-relaxed">
+              Un agente autonomo verifica rigidamente le risposte per stroncare sul nascere ogni allucinazione giuridica. Ti fiderai ciecamente.
+            </p>
+          </div>
+          <div className="p-8 rounded-3xl bg-[#2C2C2E]/50 border border-white/5 hover:border-white/10 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-[#007AFF]/10 flex items-center justify-center mb-6">
+              <ShieldAlert className="w-6 h-6 text-[#5AC8FA]" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Guardian Radar</h3>
+            <p className="text-[#98989D] leading-relaxed">
+              Avvisi tempestivi su DDL, sentenze e direttive europee. Arriva in studio già preparato sulle novità che impattano i tuoi clienti.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/10 py-12 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-[#98989D]" />
+            <span className="font-bold text-[#98989D]">LexAI</span>
+          </div>
+          <p className="text-sm text-[#636366]">
+            Esclusivamente a scopo di ricerca. L'IA non sostituisce il parere di un legale professionista.
+          </p>
+          <div className="flex gap-6 text-sm font-medium text-[#98989D]">
+             <Link href="/legal/privacy" className="hover:text-white transition-colors">Privacy</Link>
+             <Link href="/legal/terms" className="hover:text-white transition-colors">Termini</Link>
+          </div>
+        </div>
+      </footer>
+
       {showAuthModal && (
         <AuthModal 
           onClose={() => setShowAuthModal(false)}
           onSuccess={(u: User) => {
              setUser(u);
-             setShowAuthModal(false);
+             router.push('/workspace');
           }}
         />
-      )}
-
-      {/* Subscription Paywall Overlay */}
-      {showSubscriptionModal && (
-        <SubscriptionModal 
-          onClose={() => setShowSubscriptionModal(false)}
-          userEmail={user?.email || ''}
-        />
-      )}
-
-      <main className="flex-1 relative z-10 w-full flex flex-col items-center">
-        
-        {/* PLG HERO: WORKSPACE FOR EVERYONE */}
-        <div className="w-full relative">
-           <WorkspaceLayout 
-              user={user} 
-              onRequireAuth={() => setShowAuthModal(true)} 
-              onRequirePro={() => setShowSubscriptionModal(true)} 
-           />
-           {/* Hint to scroll down for guests */}
-           {!user && (
-              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-bounce cursor-pointer" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
-                  <div className="bg-white/80 backdrop-blur-md border border-marble-200 px-4 py-2 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.1)] flex items-center gap-2 hover:bg-white transition-colors">
-                     <span className="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
-                     <span className="text-[10px] uppercase font-bold tracking-widest text-slate-600">Scopri Atena Integrations</span>
-                     <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-                  </div>
-              </div>
-           )}
-        </div>
-
-        {/* MARKETING SECTION FOR GUESTS (BELOW THE FOLD) */}
-        {!user && (
-           <div className="w-full max-w-5xl px-4 flex flex-col mt-24">
-
-              {/* LIVE STATS BAR */}
-              <section className="w-full max-w-5xl mx-auto mb-20 relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-marble-200/50 via-white to-transparent rounded-[32px] blur-xl opacity-50" />
-                <div className="relative grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 p-6 md:p-8 rounded-[32px] bg-white/60 border border-marble-200 backdrop-blur-3xl shadow-[0_8px_40px_rgba(0,0,0,0.05)]">
-                  <BlurFadeIn delay={0} className="text-center">
-                    <div className="text-3xl md:text-4xl font-black text-slate-900">
-                      <NumberTicker value={8000} suffix="+" />
-                    </div>
-                    <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Documenti Indicizzati</div>
-                  </BlurFadeIn>
-                  <BlurFadeIn delay={0.08} className="text-center">
-                    <div className="text-3xl md:text-4xl font-black text-slate-900 h-[44px] flex items-center justify-center">
-                      <TypewriterLoop
-                        phrases={['AI-Native', 'Real-Time', 'RAG Hybrid', 'Agentic']}
-                        className="text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-amber-600"
-                        speed={80}
-                      />
-                    </div>
-                    <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">UI Paradigm</div>
-                  </BlurFadeIn>
-                  <BlurFadeIn delay={0.16} className="text-center">
-                    <div className="text-3xl md:text-4xl font-black text-slate-900">
-                      <NumberTicker value={5} suffix="+" />
-                    </div>
-                    <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Database Ufficiali</div>
-                  </BlurFadeIn>
-                  <BlurFadeIn delay={0.24} className="text-center">
-                    <div className="text-3xl md:text-4xl font-black text-slate-900">&lt; 2s</div>
-                    <div className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Tempo di Risposta</div>
-                  </BlurFadeIn>
-                </div>
-              </section>
-
-              {/* 3-STEP PROCESS */}
-              <section className="w-full max-w-4xl mx-auto mb-20">
-                 {/* ... (Same layout for features as before) ... */}
-                 <h3 className="text-xl font-bold mb-2 text-slate-800">Ricerca Semantica</h3>
-                <p className="text-slate-500">Non limitarti alle parole chiave. Atena comprende il contesto e l&apos;intento della tua ricerca.</p>
-                 <div className="text-center mb-16">
-                  <h2 className="text-3xl md:text-5xl font-playfair font-black text-slate-900 tracking-tight mb-4 drop-shadow-[0_0_15px_rgba(0,0,0,0.05)]">
-                    L&apos;Evoluzione del Diritto
-                  </h2>
-                  <p className="text-lg text-slate-500 max-w-lg mx-auto font-light">Tre passi per ottenere risposte legali d&apos;eccellenza, verificate e aggiornate in tempo reale in una veste puramente analitica.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                  <ProcessStep step={1} title="Chiedi" description="Scrivi la tua domanda in linguaggio naturale, come parleresti con un collega. Atena capisce il contesto giuridico." />
-                  <ProcessStep step={2} title="Genera" description="L'IA interroga simultaneamente 5 database ufficiali e genera documenti, contratti o insight nel tuo Canvas." />
-                  <ProcessStep step={3} title="Proteggi" description="Ricevi una risposta con fonti citate, contro-analisi critica e alert in tempo reale su cambiamenti normativi." />
-                </div>
-              </section>
-
-              {/* FEATURE SHOWCASE */}
-              <section id="features" className="w-full max-w-6xl mx-auto mb-20 px-4">
-                 {/* ... (Same Feature cards as before) ... */}
-                 <div className="text-center mb-16">
-                  <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-                    Architettura Split-Screen
-                  </h2>
-                  <p className="text-lg text-slate-500 max-w-lg mx-auto font-medium">Un&apos;interfaccia spaziale che separa il flusso di pensiero (Chat) dagli artefatti complessi (Canvas).</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <FeatureCard 
-                    icon={BrainCircuit} 
-                    title="Workspace Layout" 
-                    description="Un Canvas interattivo per la lettura di contratti e sentenze, fianco a fianco con la chat AI, ispirato a Google Stitch 2.0."
-                    tag="UX Paradigm"
-                  />
-                  <FeatureCard 
-                    icon={Scale} 
-                    title="Protocollo Decimo Uomo" 
-                    description="Ogni risposta viene sottoposta a contro-analisi critica. L'IA cerca attivamente falle, eccezioni e interpretazioni alternative."
-                    tag="Anti-Bias"
-                  />
-                  <FeatureCard 
-                    icon={Globe} 
-                    title="Live Web Agent" 
-                    description="Integrazione con Perplexity Sonar per aggiornamenti in tempo reale da fonti web. Sentenze recenti, dottrina, news giuridiche."
-                    tag="Real-Time"
-                  />
-                  <FeatureCard 
-                    icon={ShieldAlert} 
-                    title="Guardian Alerts" 
-                    description="Sistema autonomo che monitora cambiamenti normativi e identifica anomalie."
-                  />
-                  <FeatureCard 
-                    icon={Palette} 
-                    title="Visual Legal Intelligence" 
-                    description="Generazione visiva di mappe mentali per schematizzare concetti giuridici complessi."
-                  />
-                  <FeatureCard 
-                    icon={GitCompare} 
-                    title="Version Diff Tracker" 
-                    description="Confronta versioni di articoli di legge nel tempo all'interno del tuo Canvas espanso."
-                  />
-                </div>
-              </section>
-
-              {/* CTA FINALE */}
-              <section className="w-full max-w-4xl mx-auto mb-32 text-center px-4">
-                <div className="p-6 md:p-10 rounded-[2rem] rounded-tl-md bg-white/60 backdrop-blur-2xl border border-marble-200 shadow-[0_8px_30px_rgba(0,0,0,0.05)] relative w-full transition-all duration-500 hover:shadow-[0_10px_40px_rgba(0,0,0,0.08)] hover:border-platinum-300 group overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-platinum-100/50 to-transparent opacity-50"></div>
-                  <div className="absolute -top-40 -right-40 w-96 h-96 bg-platinum-200/50 blur-[100px] rounded-full mix-blend-multiply opacity-50 group-hover:opacity-80 transition-opacity duration-1000"></div>
-                  <div className="relative z-10 flex flex-col items-center">
-                    <h2 className="text-3xl md:text-5xl font-playfair font-black text-slate-900 tracking-tight mb-4">
-                      Sperimenta il Generative Canvas
-                    </h2>
-                    <p className="text-lg text-slate-500 mb-8 max-w-lg mx-auto font-light">
-                      L&apos;introspezione giuridica non è mai stata così profonda. Accedi per iniziare.
-                    </p>
-                    <button 
-                       onClick={() => setShowAuthModal(true)}
-                       className="inline-flex items-center gap-3 px-10 py-4 bg-slate-800 text-white font-bold rounded-[24px] hover:bg-slate-700 transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.15)] hover:-translate-y-1 active:translate-y-0"
-                    >
-                      <Sparkles className="w-5 h-5" strokeWidth={2.5} />
-                      Accedi ad Atena
-                    </button>
-                  </div>
-                </div>
-              </section>
-           </div>
-        )}
-      </main>
-
-      {/* FOOTER - Solo se NON loggato (Il Workspace occulta il footer) */}
-      {!user && (
-         <footer className="w-full border-t border-marble-200 bg-marble-50 py-16 relative z-10 shrink-0 mt-auto">
-           {/* ... Footer Content ... */}
-           <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-             <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-[24px] bg-white border border-marble-200 flex items-center justify-center text-lg font-playfair font-bold text-slate-700 shadow-[0_0_15px_rgba(0,0,0,0.05)]">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <Image src="/atena-logo-new.jpeg" alt="Atena Logo" width={90} height={28} className="object-contain opacity-80 mb-1 mix-blend-multiply" />
-                  <p className="text-sm font-medium text-slate-500">L&apos;Intelligenza Legale Definitiva</p>
-                </div>
-             </div>
-             <div className="flex flex-col items-center md:items-end gap-3 text-sm text-slate-500 font-medium max-w-2xl">
-               <p className="text-center md:text-right text-xs leading-relaxed">
-                 Le informazioni generate da Atena sono intese esclusivamente a scopo di ricerca e analisi testuale. Atena è un sistema di intelligenza artificiale sperimentale e può produrre risultati imprecisi o incompleti (allucinazioni). Nessuna risposta sostituisce il parere di un avvocato abilitato o la consultazione diretta delle gazzette ufficiali. Utilizzando questo servizio, accetti che Atena e i suoi creatori non sono responsabili per eventuali danni derivanti dall&apos;uso di queste informazioni.
-               </p>
-               <div className="flex gap-6 mt-1">
-                  <Link href="/legal/privacy" className="hover:text-slate-800 transition-colors cursor-pointer">Privacy Policy</Link>
-                  <Link href="/legal/terms" className="hover:text-slate-800 transition-colors cursor-pointer">Termini di Servizio</Link>
-                  <span className="hover:text-slate-800 transition-colors cursor-pointer">Contatti</span>
-                </div>
-             </div>
-           </div>
-         </footer>
       )}
     </div>
   );
 }
-

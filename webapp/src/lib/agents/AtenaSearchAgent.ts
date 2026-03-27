@@ -53,9 +53,15 @@ export class AtenaSearchAgent extends BaseAgent {
     3. CHIAREZZA ASSOLUTA: Rispondi immediatamente alla domanda, offrendo i riferimenti normativi (es. Art. 2043) senza troppi giri di parole o verbosità inutile.
     4. ACCURATEZZA ESTREMA (ANTI-ALLUCINAZIONE): Basa la tua risposta *esclusivamente* sui documenti forniti nel CONTESTO UFFICIALE. Se le informazioni presenti non sono sufficienti per rispondere in modo completo e accurato, DEVI dichiarare esplicitamente "Non ho trovato informazioni sufficienti nei documenti ufficiali per rispondere a questa domanda." Non inventare MAI risposte, leggi, numeri o articoli.
     5. Evita muri di testo: suddividi il ragionamento in 2 o 3 punti chiave facilmente assimilabili.
+    6. MAI GESTIRE L'ESPORTAZIONE: NON chiedere MAI all'utente se desidera ricevere il file via email o su cloud, né chiedere conferme finali. L'esportazione è gestita automaticamente dai pulsanti dell'interfaccia. Fornisci semplicemente la risposta giuridica e fermati.
     `;
     
-    const result = await model.generateContent(prompt);
+    const parts: Array<string | { inlineData: { data: string; mimeType: string } }> = [prompt];
+    if (context?.inlineData) {
+      parts.push({ inlineData: context.inlineData });
+    }
+    
+    const result = await model.generateContent(parts);
     return result.response.text();
   }
 }

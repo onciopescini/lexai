@@ -14,14 +14,18 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconAlertTriangle,
+  IconGavel,
+  IconBuilding,
 } from '@tabler/icons-react';
 import CommandPalette from '@/components/ui/CommandPalette';
 
 const NAV_ITEMS = [
-  { href: '/atena',   label: 'Atena AI',      icon: IconBrain,   shortcut: 'A' },
-  { href: '/library', label: 'Biblioteca',    icon: IconLibrary, shortcut: 'L' },
-  { href: '/guardian',label: 'Guardian',      icon: IconShield,  shortcut: 'G', badge: true },
-  { href: '/lessons', label: 'Lezioni',       icon: IconBook,    shortcut: 'I' },
+  { href: '/atena',   label: 'Atena AI',      icon: IconBrain,    shortcut: 'A' },
+  { href: '/library', label: 'Biblioteca',    icon: IconLibrary,  shortcut: 'L' },
+  { href: '/guardian',label: 'Guardian',      icon: IconShield,   shortcut: 'G', badge: true },
+  { href: '/lessons', label: 'Lezioni',       icon: IconBook,     shortcut: 'I' },
+  { href: '/predict', label: 'Predittiva',    icon: IconGavel,    shortcut: 'P', premium: true },
+  { href: '/firm',    label: 'Studio',        icon: IconBuilding, shortcut: 'S', premium: true },
 ];
 
 /**

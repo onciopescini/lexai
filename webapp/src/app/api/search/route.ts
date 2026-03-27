@@ -11,40 +11,35 @@ import { LiveWebAgent, LiveWebInput } from '@/lib/agents/LiveWebAgent';
 import { findCachedKnowledge, cacheKnowledge } from '@/lib/knowledgeCache';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+// FIX M4: Import sanitizer for prompt injection protection
+import { sanitizeInput, FILE_SIZE_LIMITS } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Consenti fino a 60 secondi per l'esecuzione del pipeline RAG complesso su Vercel
+export const maxDuration = 60;
 
-// Inizializzazione Redis (Upstash) per Rate Limiting distribuito su Vercel Edge
 const redisOptions = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
   ? { url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN }
   : null;
-
 const redisClient = redisOptions ? new Redis(redisOptions) : null;
-
 const upstashRateLimit = redisClient ? new Ratelimit({
   redis: redisClient,
   limiter: Ratelimit.slidingWindow(10, '1 m'),
   analytics: true,
 }) : null;
 
-// Semplice Rate Limiter in-memory fallback (per ambiente locale locale o assenza variabili Upstash)
-const RATE_LIMIT_WINDOW_MS = 60000; // 1 minuto
+const RATE_LIMIT_WINDOW_MS = 60000;
 const MAX_REQUESTS_PER_WINDOW = 10;
 const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
 
 async function checkRateLimit(ip: string): Promise<boolean> {
-  // 1. Primary Distributed Limiter
   if (upstashRateLimit) {
      try {
        const { success } = await upstashRateLimit.limit(`ratelimit_${ip}`);
        return success;
      } catch (err) {
-       console.warn("[RATE LIMIT] Fallimento connessione Redis, uso memoria locale:", err);
+       console.warn("[RATE LIMIT] Fallimento redis:", err);
      }
   }
-
-  // 2. Fallback in-memory
   const now = Date.now();
   if (Math.random() < 0.05) {
     for (const [key, val] of rateLimitMap.entries()) {
@@ -52,333 +47,263 @@ async function checkRateLimit(ip: string): Promise<boolean> {
     }
   }
   const record = rateLimitMap.get(ip);
-  
   if (!record || now > record.resetTime) {
     rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
-  
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
-    return false;
-  }
-  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) return false;
   record.count += 1;
   return true;
 }
 
 export async function POST(req: Request) {
+  const encoder = new TextEncoder();
+  const stream = new TransformStream();
+  const writer = stream.writable.getWriter();
+
+  const sendEvent = async (type: string, payload: any) => {
+    try {
+      await writer.write(encoder.encode(`data: ${JSON.stringify({ type, payload })}\n\n`));
+    } catch (e) {
+      console.error("Errore scrittura stream:", e);
+    }
+  };
+  const closeStream = async () => {
+    try {
+      await writer.close();
+    } catch (e) {
+      console.error("Errore chiusura stream:", e);
+    }
+  };
+
+  let body;
   try {
-    // Estrazione IP per Rate Limiting
-    const forwardedFor = req.headers.get('x-forwarded-for');
-    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'anonymous';
-    
-    const isAllowed = await checkRateLimit(ip);
-    if (!isAllowed) {
-      console.warn(`[RATE LIMIT] Richiesta bloccata per l'IP: ${ip}`);
-      return NextResponse.json({ error: 'Troppe richieste. Riprova tra un minuto.' }, { status: 429 });
-    }
-
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json({ error: 'Payload JSON non valido' }, { status: 400 });
-    }
-
-    const { query, sourceFilter, history, draftingMode } = body;
-
-    // Strict Input Validation
-    if (!query || typeof query !== 'string' || query.trim().length === 0) {
-      return NextResponse.json({ error: 'Nessuna query fornita o formato non valido' }, { status: 400 });
-    }
-    if (query.length > 2000) {
-      return NextResponse.json({ error: 'Query troppo lunga (max 2000 caratteri)' }, { status: 400 });
-    }
-
-    // --- AUTHENTICATION & QUOTA ENFORCEMENT ---
-    const supabaseAuth = await createClient();
-    const { data: { user } } = await supabaseAuth.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'AUTHENTICATION_REQUIRED', message: 'Accedi o registrati per utilizzare Atena.' }, { status: 401 });
-    }
-
-    const isPremium = user.user_metadata?.is_premium === true;
-    const freeQueriesUsed = user.user_metadata?.free_queries_used || 0;
-
-    if (!isPremium && freeQueriesUsed >= 10) {
-      return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: 'Hai esaurito le 10 domande gratuite. Esegui l\'upgrade a Premium per sbloccare l\'oracolo senza limiti.' }, { status: 403 });
-    }
-
-    // --- PHASE 7: Log della query utente per il Trend Analyzer (Citizen Guardian) ---
-    supabaseAdmin
-      .from('user_queries')
-      .insert([{ query: query }])
-      .then(({ error: logError }) => {
-        if (logError) console.error("Errore durante il salvataggio log query:", logError);
-      });
-
-    console.log(`[*] Ricerca Semantica per: "${query}" (Filtro: ${sourceFilter || 'Nessuno'})`);
-
-    // --- PHASE 14: Agentic RAG Router ---
-    console.log(`[*] Esecuzione Agentic Router per classificazione intento...`);
-    const routerAgent = new RouterAgent();
-    const routerOutput = await routerAgent.execute({ query });
-    const { intent, confidence } = routerOutput.data as { intent: string, confidence: number };
-    console.log(`[*] Intento Rilevato: ${intent.toUpperCase()} (Sicurezza: ${Math.round(confidence * 100)}%)`);
-
-    if (intent === 'general_chat') {
-      return NextResponse.json({ 
-        response: `Ciao! Sono Atena, il tuo assistente legale AI. Posso aiutarti a ricercare leggi nel database ufficiale, redigere contratti, o analizzare casi giuridici. Come posso esserti utile oggi?`,
-        sources: [] 
-      });
-    }
-
-    if (intent === 'history') {
-      return NextResponse.json({ 
-        response: `Hai chiesto informazioni storiche o confronti tra vecchie versioni di una legge. Ti invito a utilizzare lo strumento avanzato "Libreria e Storico" che ti permette di visualizzare il "Diff" esatto (le parole aggiunte o rimosse) tra le varie edizioni storiche del codice. Dimmi se vuoi che cerchi comunque il testo attualmente in vigore.`,
-        sources: [] 
-      });
-    }
-
-    const effectiveDraftingMode = draftingMode || intent === 'drafting';
-    if (effectiveDraftingMode) {
-      console.log(`[*] Modalità Drafting (Redazione) attivata dal Router o dall'Utente.`);
-      if (!isPremium) {
-        return NextResponse.json({ error: 'PREMIUM_REQUIRED', message: 'Il Drafting Avanzato di testi giuridici è una funzione esclusiva di Atena Premium.' }, { status: 403 });
-      }
-    }
-
-    const embedding = await getEmbeddings(query);
-
-    let filterCondition = {};
-    if (sourceFilter && sourceFilter !== 'Tutte le Fonti') {
-        filterCondition = { 'source': sourceFilter };
-    }
-
-    // 1. Cercare prima solo nel database e agent memories
-    console.log(`[*] Avvio ricerca database (Supabase Hybrid + Agent Memories)...`);
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const searchPromises: any[] = [
-      supabaseAdmin.rpc('hybrid_search_legal_docs', {
-        query_embedding: embedding,
-        query_text: query,
-        filter: filterCondition,
-        match_count: 5,
-        full_text_weight: 1.0,
-        semantic_weight: 1.0
-      }),
-      supabaseAdmin.rpc('match_agent_memories', {
-        query_embedding: embedding,
-        match_threshold: 0.3,
-        match_count: 3
-      })
-    ];
-
-    if (isPremium) {
-      console.log(`[*] Utente Premium: Ricerca nei documenti personali (RAG Privato)...`);
-      searchPromises.push(
-        supabaseAdmin.rpc('match_user_documents', {
-          query_embedding: embedding,
-          match_threshold: 0.7,
-          match_count: 5,
-          p_user_id: user.id
-        })
-      );
-    }
-
-    const results = await Promise.all(searchPromises);
-    const supabaseResult = results[0];
-    const memoryResult = results[1];
-    const userDocsResult = isPremium ? results[2] : null;
-
-    const { data: documents, error } = supabaseResult;
-
-    if (error) {
-      console.error('Supabase Vector Search Error:', error);
-      return NextResponse.json({ error: 'Errore durante la ricerca nel database legale.' }, { status: 500 });
-    }
-
-    if (!documents || documents.length === 0) {
-      return NextResponse.json({ response: 'Non ho trovato nessuna corrispondenza legale ufficiale nel database.', sources: [] });
-    }
-
-    // 2. Semantic Reranking via Groq
-    let rankedDocs = documents;
-    try {
-      rankedDocs = await rerankDocuments(query, documents);
-      console.log('[*] Groq reranking completato.');
-    } catch {
-      console.log('[*] Reranking skipped (Groq unavailable), using vector similarity order.');
-    }
-
-    let contextText = rankedDocs.map(
-      (doc: {title: string; source_url: string; content: string}) => `FONTE UFFICIALE DB: ${doc.title} \nURL: ${doc.source_url}\nTESTO:\n${doc.content}\n---`
-    ).join('\n');
-
-    // Prepend private documents if found
-    if (userDocsResult && userDocsResult.data && userDocsResult.data.length > 0) {
-      console.log(`[*] Trovati ${userDocsResult.data.length} documenti personali.`);
-      const personalDocsText = userDocsResult.data.map(
-        (doc: {title: string; content: string}) => `📁 DOCUMENTO PERSONALE (RAG Privato): ${doc.title}\nTESTO:\n${doc.content}\n---`
-      ).join('\n');
-      contextText = personalDocsText + '\n' + contextText;
-    }
-
-    let agentMemoriesText = "";
-    if (memoryResult && memoryResult.data && memoryResult.data.length > 0) {
-      agentMemoriesText = memoryResult.data.map((m: { memory_text: string }) => `- ${m.memory_text}`).join('\n');
-    }
-
-    // 3. Generare la Base Thesis (Primary AI) usando SOLO fonti interne
-    console.log('[*] Generazione Tesi Base AI (Internal Knowledge Only)...');
-    const conversationHistory = history || [];
-    let baseThesis = "";
-    
-    if (effectiveDraftingMode) {
-      const draftingAgent = new PicoClawAgent();
-      const draftOutput = await draftingAgent.execute({ 
-        query, 
-        context: { history: conversationHistory, documents: contextText, systemMemories: agentMemoriesText } 
-      });
-      baseThesis = draftOutput.data as string;
-    } else {
-      const searchAgent = new AtenaSearchAgent();
-      const searchOutput = await searchAgent.execute({ 
-        query, 
-        context: { history: conversationHistory, documents: contextText, systemMemories: agentMemoriesText } 
-      });
-      baseThesis = searchOutput.data as string;
-    }
-
-    // 4. DATA-CLASH PROTOCOL (Se non siamo in drafting)
-    let perplexityValidation = null;
-    let tenthManAnswer = "*(Il Protocollo Decimo Uomo è disattivato in modalità Drafting. Rivedere attentamente prima dell'uso).*";
-    let factCheckReport = null;
-
-    console.log('[*] Avvio Operazioni Parallele (Data-Clash, Imagen 4, Fact-Check Engine)...');
-    const imageTopicPrompt = `Concetto legale da illustrare: "${query}"`;
-    
-    // Generiamo l'immagine in parallelo a prescindere dal routing
-    const legalIllustrationPromise = generateLegalIllustration(imageTopicPrompt);
-
-    if (!effectiveDraftingMode) {
-      // 4a. Perplexity Cache Check & Data-Clash
-      console.log('[*] Esecuzione Perplexity Data-Clash contro la Tesi Base...');
-      
-      const cachedResult = await findCachedKnowledge(query, embedding, 0.85);
-
-      if (cachedResult) {
-        // Cache HIT: Use verified knowledge
-        perplexityValidation = cachedResult.perplexity_response;
-        
-        // Skip TenthMan and FactCheck if it's already a verified truth, but we keep the structure consistent
-        tenthManAnswer = "*(Risposta validata originata dalla Memoria Cache di Atena. Il Data-Clash web è stato bypassato in quanto l'informazione è già verificata e stabilizzata).*";
-        
-        // Create a fake report for the frontend based on the cache
-        factCheckReport = {
-          overall_score: 100, // We assume verified from cache implies good score
-          total_claims: 1,
-          verified: 1,
-          partial: 0,
-          unsupported: 0,
-          opinion: 0,
-          claims: [{
-            claim: "Informazione Validata in Cache",
-            verdict: "verified",
-            source_ref: "Atena Memory Cache",
-            explanation: `Match Semantico nella Cache di Conoscenza Verificata (Scadenza: ${new Date(cachedResult.expires_at).toLocaleDateString()})`
-          }],
-          methodology: "Recupero da cache di conoscenza verificata."
-        } as FactCheckReport;
-      } else {
-        // Cache MISS: Call LiveWebAgent (Perplexity)
-        console.log('[*] Cache MISS — Esecuzione chiamata Perplexity API...');
-        const liveWebAgent = new LiveWebAgent();
-        const webOutput = await liveWebAgent.execute({ query, baseThesis } as LiveWebInput);
-        perplexityValidation = webOutput.data as string;
-        
-        const tenthManContext = `CONTESTO UFFICIALE DB:\n${contextText}\n\n=== CONTRO-ANALISI WEB (PERPLEXITY DATA-CLASH) ===\n${perplexityValidation || "Nessun aggiornamento web."}`;
-        
-        // 4b. Il Decimo Uomo valuta sia il DB sia l'attacco di Perplexity
-        console.log('[*] Esecuzione Protocollo Decimo Uomo...');
-        
-        const tenthManAgent = new TenthManAgent();
-        const tenthManOutputPromise = tenthManAgent.execute({ 
-          query, 
-          context: { documents: tenthManContext }, 
-          originalAnswer: baseThesis 
-        } as TenthManInput);
-        
-        const [tenthManOutput, factCheckRes] = await Promise.all([
-          tenthManOutputPromise,
-          factCheckResponse(query, baseThesis, contextText)
-        ]);
-        
-        tenthManAnswer = tenthManOutput.data as string;
-        factCheckReport = factCheckRes;
-
-        // Save successfully verified knowledge back to cache (assuming overall_score > 70 implies verified enough)
-        if (factCheckReport && factCheckReport.overall_score >= 70) {
-          const scoreStr = factCheckReport.overall_score >= 90 ? 'verified' : 'partially_verified';
-          await cacheKnowledge(query, embedding, perplexityValidation, baseThesis, scoreStr);
-        }
-      }
-    } else {
-      // Drafting mode
-      factCheckReport = { 
-        overall_score: 100,
-        total_claims: 0, verified: 0, partial: 0, unsupported: 0, opinion: 0,
-        claims: [],
-        methodology: "Modalità Drafting (Stesura) attiva dal router. Modulo Fact-Check automatizzato bypassato." 
-      } as FactCheckReport;
-    }
-
-    const legalIllustration = await legalIllustrationPromise;
-
-    // Salvataggio della sessione in DB e Aggiornamento Quote Free
-    if (!isPremium) {
-      await supabaseAdmin.auth.admin.updateUserById(user.id, {
-        user_metadata: {
-          ...user.user_metadata,
-          free_queries_used: freeQueriesUsed + 1
-        }
-      });
-      console.log(`[*] Quota Free aggiornata per l'utente ${user.id}: ${freeQueriesUsed + 1}/10`);
-    }
-
-    supabaseAdmin.from('chat_sessions').insert([{ 
-      session_id: user.id || 'default_user', 
-      user_query: query, 
-      ai_response: baseThesis 
-    }]).then(({ error: sessionError }) => {
-      if (sessionError) console.error("Errore salvataggio sessione di chat:", sessionError);
-    });
-
-    supabaseAdmin.from('atena_truth_telemetry').insert([{
-      session_id: 'default_user',
-      query_text: query,
-      tenth_man_triggered: !effectiveDraftingMode,
-      primary_ai_model: 'gemini-2.5-flash',
-      sources_count: rankedDocs ? rankedDocs.length : 0
-    }]).then(({ error: telemetryError }) => {
-      if (telemetryError) console.error("Errore salvataggio Telemetria della Verità:", telemetryError);
-    });
-
-    // 5. Ritornare all'interfaccia UI utente
-    return NextResponse.json({
-      response: baseThesis,
-      contra_analysis: tenthManAnswer,
-      sources: rankedDocs,
-      web_updates: perplexityValidation,
-      legal_illustration: legalIllustration,
-      fact_check: factCheckReport
-    });
-
-  } catch (error: unknown) {
-    console.error('API Error:', error);
-    // Non ritorniamo mai il dettaglio dell'errore (errMessage) al client per sicurezza
-    return NextResponse.json({ error: 'Internal Server Error. Si è verificato un problema tecnico.' }, { status: 500 });
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Payload JSON non valido' }, { status: 400 });
   }
+  const { query: rawQuery, sourceFilter, history, draftingMode, workspaceScope } = body;
+  if (!rawQuery || typeof rawQuery !== 'string' || rawQuery.trim().length === 0) {
+    return NextResponse.json({ error: 'Nessuna query valida' }, { status: 400 });
+  }
+  if (rawQuery.length > FILE_SIZE_LIMITS.SEARCH_QUERY * 2) {
+    return NextResponse.json({ error: 'Query troppo lunga' }, { status: 400 });
+  }
+
+  // FIX M4: Sanitize query — strip injection patterns before LLM/embedding calls
+  const query = sanitizeInput(rawQuery, FILE_SIZE_LIMITS.SEARCH_QUERY);
+  // Phase 16: scope for dual workspace RAG ('personal' | 'firm' | 'all')
+  const docScope = ['personal', 'firm', 'all'].includes(workspaceScope) ? workspaceScope : 'all';
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anonymous';
+
+  (async () => {
+    try {
+      await sendEvent('status', 'Scannerizzazione sicura della richiesta...');
+      const rateLimitPromise = checkRateLimit(ip);
+      const authPromise = createClient().then(client => client.auth.getUser());
+      const routerPromise = new RouterAgent().execute({ query });
+      const embeddingPromise = getEmbeddings(query);
+
+      const [isAllowed, authResult] = await Promise.all([rateLimitPromise, authPromise]);
+      if (!isAllowed) {
+        await sendEvent('error', 'Troppe richieste. Riprova tra un minuto.');
+        await closeStream(); return;
+      }
+      const user = authResult.data?.user;
+      if (!user) {
+        await sendEvent('error_auth', 'AUTHENTICATION_REQUIRED');
+        await closeStream(); return;
+      }
+      const isPremium = user.user_metadata?.is_premium === true;
+      const freeQueriesUsed = user.user_metadata?.free_queries_used || 0;
+      if (!isPremium && freeQueriesUsed >= 10) {
+        await sendEvent('error_quota', 'QUOTA_EXCEEDED');
+        await closeStream(); return;
+      }
+      supabaseAdmin.from('user_queries').insert([{ query }]).then();
+
+      await sendEvent('status', 'Agentic Router: Calcolo direzionale dell\'intento semantico...');
+      const [routerOutput, embedding] = await Promise.all([routerPromise, embeddingPromise]);
+      const { intent, confidence } = routerOutput.data as { intent: string, confidence: number };
+      await sendEvent('status', `Intento Identificato: ${intent.toUpperCase()} (Sicurezza: ${Math.round(confidence * 100)}%)`);
+
+      if (intent === 'general_chat') {
+        await sendEvent('result', { response: `Ciao! Sono Atena. Posso aiutarti a ricercare leggi, redigere contratti o analizzare casi giuridici.` });
+        await closeStream(); return;
+      }
+      if (intent === 'history') {
+        await sendEvent('result', { response: `Per questa richiesta, utilizza lo strumento "Libreria e Storico" per visualizzare il Diff esatto tra le vecchie edizioni della legge.` });
+        await closeStream(); return;
+      }
+
+      const effectiveDraftingMode = draftingMode || intent === 'drafting';
+      if (effectiveDraftingMode) {
+        await sendEvent('status', 'Modalità Drafting impostata. Attenzione richiesta per il carico di calcolo.');
+        if (!isPremium) { await sendEvent('error_premium', 'PREMIUM_REQUIRED'); await closeStream(); return; }
+      }
+
+      await sendEvent('status', 'Cross-RAG: Ricerca vettoriale nei Codici di Legge e nel Workspace Privato...');
+      let filterCondition = {};
+      if (sourceFilter && sourceFilter !== 'Tutte le Fonti') filterCondition = { 'source': sourceFilter };
+
+      const searchPromises: any[] = [
+        supabaseAdmin.rpc('hybrid_search_legal_docs', { query_embedding: embedding, query_text: query, filter: filterCondition, match_count: 5, full_text_weight: 1.0, semantic_weight: 1.0 }),
+        supabaseAdmin.rpc('match_agent_memories', { query_embedding: embedding, match_threshold: 0.3, match_count: 3 })
+      ];
+      if (isPremium) {
+        // Phase 16: resolve firm_id if needed for scoped RAG
+        let firmId: string | null = null;
+        if (docScope === 'firm' || docScope === 'all') {
+          const supabaseUser = await createClient();
+          const { data: membership } = await (await supabaseUser)
+            .from('firm_members')
+            .select('firm_id')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .maybeSingle();
+          firmId = membership?.firm_id ?? null;
+        }
+        searchPromises.push(
+          supabaseAdmin.rpc('match_user_documents', {
+            query_embedding: embedding,
+            match_threshold: 0.7,
+            match_count: 5,
+            p_user_id: user.id,
+            p_scope: docScope,
+            p_firm_id: firmId,
+          })
+        );
+      }
+
+      const results = await Promise.all(searchPromises);
+      const supabaseResult = results[0];
+      const memoryResult = results[1];
+      const userDocsResult = isPremium ? results[2] : null;
+
+      if (supabaseResult.error) {
+        await sendEvent('error', 'Errore critico durante l\'estrazione dal Database.');
+        await closeStream(); return;
+      }
+      const documents = supabaseResult.data;
+      if (!documents || documents.length === 0) {
+        await sendEvent('result', { response: 'Nessuna corrispondenza trovata.', sources: [] });
+        await closeStream(); return;
+      }
+
+      let rankedDocs = documents;
+      try {
+        await sendEvent('status', 'Reranking Hardware: Groq Engine riordina semanticamente i documenti...');
+        rankedDocs = await rerankDocuments(query, documents);
+      } catch { /* skip */ }
+
+      let contextText = rankedDocs.map((doc: any) => `FONTE DB: ${doc.title}\nURL: ${doc.source_url}\nTESTO:\n${doc.content}\n---`).join('\n');
+      if (userDocsResult?.data?.length > 0) {
+        await sendEvent('status', `Knowledge Base Personale inclusa: Trovati ${userDocsResult.data.length} documenti.`);
+        contextText = userDocsResult.data.map((doc: any) => `📁 DOCUMENTO PRV: ${doc.title}\nTESTO:\n${doc.content}\n---`).join('\n') + '\n' + contextText;
+      }
+      let agentMemoriesText = "";
+      if (memoryResult?.data?.length > 0) {
+        agentMemoriesText = memoryResult.data.map((m: any) => `- ${m.memory_text}`).join('\n');
+      }
+      
+      // OMNICHANNEL CHAT CONTINUITY: Fetch Telegram Memory
+      const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+      if (telegramChatId) {
+        await sendEvent('status', 'Sincronizzazione Omnichannel: Recupero contesto da Telegram...');
+        const { data: teleMem } = await supabaseAdmin
+          .from('telegram_memory')
+          .select('role, content')
+          .eq('chat_id', telegramChatId)
+          .order('created_at', { ascending: false })
+          .limit(6);
+          
+        if (teleMem && teleMem.length > 0) {
+          const teleHistory = [...teleMem].reverse().map(m => `${m.role.toUpperCase()} (Telegram): ${m.content}`).join('\n');
+          agentMemoriesText = `--- CONTESTO CHAT TELEGRAM ---\n${teleHistory}\n\n` + agentMemoriesText;
+        }
+      }
+
+      await sendEvent('status', 'Brain Core: Generazione tesi difensiva tramite LLM...');
+      let baseThesis = "";
+      if (effectiveDraftingMode) {
+        const draftOutput = await new PicoClawAgent().execute({ query, context: { history: history||[], documents: contextText, systemMemories: agentMemoriesText } });
+        baseThesis = draftOutput.data as string;
+      } else {
+        const searchOutput = await new AtenaSearchAgent().execute({ query, context: { history: history||[], documents: contextText, systemMemories: agentMemoriesText } });
+        baseThesis = searchOutput.data as string;
+      }
+
+      let perplexityValidation = null, tenthManAnswer = "*(Disattivato in Drafting).*", factCheckReport = null;
+      const legalIllustrationPromise = generateLegalIllustration(`Concetto legale: "${query}"`);
+
+      if (!effectiveDraftingMode) {
+        await sendEvent('status', 'Controllo Cache: Verifica esistenza tesi validate pregenerate...');
+        const cachedResult = await findCachedKnowledge(query, embedding, 0.85);
+        if (cachedResult) {
+          await sendEvent('status', 'Hit Cache Verificata! Bypass Data-Clash web.');
+          perplexityValidation = cachedResult.perplexity_response;
+          tenthManAnswer = "*(Risposta dalla Cache: Data-Clash bypassato).*";
+          factCheckReport = {
+            overall_score: 100, total_claims: 1, verified: 1, partial: 0, unsupported: 0, opinion: 0,
+            claims: [{ claim: "Validata in Cache", verdict: "verified", source_ref: "Cache", explanation: "Match Semantico Cache"}],
+            methodology: "Recupero da cache."
+          };
+        } else {
+          await sendEvent('status', 'Perplexity Data-Clash: Connessione agenti Sentinel al Web...');
+          const webOutput = await new LiveWebAgent().execute({ query, baseThesis } as LiveWebInput);
+          perplexityValidation = webOutput.data as string;
+          
+          await sendEvent('status', 'Innesco Protocollo Decimo Uomo: Dibattito feroce tra Tesi (Int) e Antitesi (Web)...');
+          const tenthManContext = `CONTESTO DB:\n${contextText}\n\n=== CONTRO-ANALISI WEB ===\n${perplexityValidation}`;
+          const tenthManPromise = new TenthManAgent().execute({ query, context: { documents: tenthManContext }, originalAnswer: baseThesis } as TenthManInput);
+          
+          await sendEvent('status', 'Atena Fact-Checker: Scomposizione e calcolo oggettivo confutazioni...');
+          const [tmOut, fcRes] = await Promise.all([tenthManPromise, factCheckResponse(query, baseThesis, contextText)]);
+          tenthManAnswer = tmOut.data as string;
+          factCheckReport = fcRes;
+          if (factCheckReport && factCheckReport.overall_score >= 70) {
+             await sendEvent('status', 'Consolidamento Verità nella Rete Neurale e Caching...');
+             await cacheKnowledge(query, embedding, perplexityValidation, baseThesis, factCheckReport.overall_score >= 90 ? 'verified' : 'partially_verified');
+          }
+        }
+      } else {
+        factCheckReport = { overall_score: 100, total_claims: 0, verified: 0, partial: 0, unsupported: 0, opinion: 0, claims: [], methodology: "Bypass Drafting" };
+      }
+
+      await sendEvent('status', 'Generazione Illustration e confezionamento dell\'Artefatto...');
+      const legalIllustration = await legalIllustrationPromise;
+
+      if (!isPremium) supabaseAdmin.rpc('increment_free_queries', { p_user_id: user.id }).then();
+      supabaseAdmin.from('chat_sessions').insert([{ session_id: user.id || 'default_user', user_query: query, ai_response: baseThesis }]).then();
+      
+      // OMNICHANNEL CHAT CONTINUITY: Backup WebApp chat to Telegram Memory
+      if (telegramChatId) {
+          supabaseAdmin.from('telegram_memory').insert([
+              { chat_id: telegramChatId, role: 'user', content: query },
+              { chat_id: telegramChatId, role: 'model', content: baseThesis }
+          ]).then();
+      }
+      
+      supabaseAdmin.from('atena_truth_telemetry').insert([{ session_id: 'default_user', query_text: query, tenth_man_triggered: !effectiveDraftingMode, primary_ai_model: 'gemini-2.5-flash', sources_count: rankedDocs?.length||0 }]).then();
+
+      const isLastFreeQuery = !isPremium && (freeQueriesUsed + 1) >= 10;
+
+      if (isLastFreeQuery) {
+        await sendEvent('last_free_query', {
+          message: 'Questa è la tua ultima query gratuita.',
+          cta: { label: 'Prova LexAI Pro gratis per 3 giorni', href: '/checkout?trial=true' }
+        });
+      }
+
+      await sendEvent('result', { response: baseThesis, contra_analysis: tenthManAnswer, sources: rankedDocs, web_updates: perplexityValidation, legal_illustration: legalIllustration, fact_check: factCheckReport });
+    } catch (error: any) {
+      console.error('API Error:', error);
+      await sendEvent('error', `Errore tecnico profondo: ${error.message || 'Sconosciuto'}`);
+    } finally {
+      await closeStream();
+    }
+  })();
+
+  return new Response(stream.readable, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } });
 }

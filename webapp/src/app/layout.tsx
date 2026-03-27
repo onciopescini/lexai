@@ -157,7 +157,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased min-h-screen flex flex-col bg-marble-50 text-slate-900 selection:bg-platinum-400/30 overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased min-h-screen flex flex-col selection:bg-[#007AFF]/30 overflow-x-hidden`}
       >
         <Suspense fallback={null}>
           <PostHogPageview />

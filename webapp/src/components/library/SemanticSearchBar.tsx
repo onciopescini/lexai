@@ -10,7 +10,7 @@ interface SemanticSearchBarProps {
 
 export default function SemanticSearchBar({ searchQuery, setSearchQuery, currentSourceTitle }: SemanticSearchBarProps) {
   return (
-    <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-8">
+    <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-3">
        <div className="flex gap-2 text-sm font-medium text-slate-500 items-center">
           <span className="text-slate-400">Library</span>
           <span>/</span>

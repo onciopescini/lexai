@@ -28,13 +28,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Nessun file fornito' }, { status: 400 });
     }
 
-    // 1. Leggere e parsare il PDF
+    // 1. Leggere e parsare il File (PDF, Audio, Image)
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const pdfData = await pdfParse(buffer);
-    const pdfText = pdfData.text.replace(/\s+/g, ' ').substring(0, 15000); // Limit length
+    
+    let pdfText = "";
+    let inlineData: { data: string; mimeType: string } | undefined = undefined;
 
-    console.log(`[*] PDF Caricato: ${file.name} | Lunghezza estratto: ${pdfText.length} car.`);
+    if (file.type === 'application/pdf') {
+      const pdfData = await pdfParse(buffer);
+      pdfText = pdfData.text.replace(/\s+/g, ' ').substring(0, 15000);
+      console.log(`[*] PDF Caricato: ${file.name} | Lunghezza estratto: ${pdfText.length} car.`);
+    } else if (file.type.startsWith('image/') || file.type.startsWith('audio/')) {
+      inlineData = { data: buffer.toString('base64'), mimeType: file.type };
+      console.log(`[*] File Multimediale Caricato: ${file.name} | Tipo: ${file.type}`);
+      
+      // Pre-Transcription step for RAG Extraction
+      const { getGenAI } = await import('@/lib/gemini');
+      const model = getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
+      const prompt = file.type.startsWith('audio/') 
+        ? "Trascrivi in italiano il contenuto di questo audio nel modo più preciso e fedele possibile. Evita di inventare parole, scrivi solo quello che senti."
+        : "Estrai tutto il testo da questa immagine tramite OCR accurato. Se c'è testo scritto a mano o macchina, riportalo. Se l'immagine è un contratto/documento, riportane le clausole. Se non c'è testo rilevante, descrivi il contesto dell'immagine in dettaglio.";
+        
+      const transcriptionRes = await model.generateContent([prompt, { inlineData }]);
+      pdfText = transcriptionRes.response.text().substring(0, 15000);
+      console.log(`[*] Pre-Trascrizione Multimediale completata: ${pdfText.length} car.`);
+    } else {
+      return NextResponse.json({ error: 'Formato file non supportato (Usa PDF, Image, Audio).' }, { status: 400 });
+    }
 
     // 2. Creare una query di ricerca dal PDF
     const extractionQuery = `I need to analyze this legal document. Find the most relevant constitutional, civil, and penal laws regarding the topics covered in this document excerpt: ${pdfText.substring(0, 2000)}`;
@@ -96,11 +117,11 @@ export async function POST(req: Request) {
     let aiAnswer = "";
     if (draftingMode) {
       const picoClaw = new PicoClawAgent();
-      const res = await picoClaw.execute({ query: analysisQuery, context: { history, documents: contextText } });
+      const res = await picoClaw.execute({ query: analysisQuery, context: { history, documents: contextText, inlineData } });
       aiAnswer = res.data as string;
     } else {
       const atenaSearch = new AtenaSearchAgent();
-      const res = await atenaSearch.execute({ query: analysisQuery, context: { history, documents: contextText } });
+      const res = await atenaSearch.execute({ query: analysisQuery, context: { history, documents: contextText, inlineData } });
       aiAnswer = res.data as string;
     }
 

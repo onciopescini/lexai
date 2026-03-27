@@ -172,12 +172,11 @@ export default function AIXRayPanel({ selectedArticle, setSelectedArticle, isDif
                     
                     <div className="font-serif text-[15px] leading-8 text-slate-700 bg-slate-50 p-5 rounded-2xl border border-dashed border-slate-300">
                        {loadingDiff ? (
-                         <div className="flex justify-center py-4">
-                           <div className="animate-pulse flex space-x-2">
-                             <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                             <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                             <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                           </div>
+                         <div className="space-y-4 py-4 w-full">
+                           <div className="h-3 bg-slate-200/60 rounded-full w-full animate-pulse"></div>
+                           <div className="h-3 bg-slate-200/60 rounded-full w-11/12 animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                           <div className="h-3 bg-slate-200/60 rounded-full w-4/5 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                           <div className="h-3 bg-slate-200/60 rounded-full w-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
                          </div>
                        ) : diffData && diffData.diff ? (
                          diffData.diff.map((part, index) => {

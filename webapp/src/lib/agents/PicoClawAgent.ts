@@ -51,9 +51,15 @@ export class PicoClawAgent extends BaseAgent {
     3. Adotta un tono istituzionale, verboso se necessario per la precisione, e giuridicamente rigoroso.
     4. Se mancano dettagli chiave (es. nomi, importi, date), inserisci campi segnaposto chiari come [INSERIRE NOME] o [INSERIRE DATA].
     5. Resituisci SOLO il testo del documento richiesto, senza introdurlo con frasi come "Ecco la bozza:" o simili.
+    6. NON GESTIRE ESPORTAZIONI: Non chiedere MAI all'utente se desidera ricevere il documento via email o su cloud. L'interfaccia utente ha già dei pulsanti dedicati per questo. Fornisci solo il testo e fermati.
     `;
     
-    const result = await model.generateContent(prompt);
+    const parts: Array<string | { inlineData: { data: string; mimeType: string } }> = [prompt];
+    if (context?.inlineData) {
+      parts.push({ inlineData: context.inlineData });
+    }
+    
+    const result = await model.generateContent(parts);
     return result.response.text();
   }
 }

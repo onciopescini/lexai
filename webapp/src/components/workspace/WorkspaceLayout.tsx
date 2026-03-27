@@ -2,11 +2,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Sparkles, Search, X, FileText, Share2, Layers, GitCompare, Cloud, Mail } from 'lucide-react';
+import { Sparkles, Search, X, FileText, Share2, Layers, GitCompare, Cloud, Mail, Copy, Check, Lock, ThumbsUp, ThumbsDown, Terminal, Paperclip, Mic, Database } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import MarkdownRenderer from '../ui/MarkdownRenderer';
 import LegalFactCheck from '../stateful/LegalFactCheck';
 import ThinkingIndicator from '../ui/ThinkingIndicator';
 import MindMapViewer from '../ui/MindMapViewer';
+import WorkspaceScopeToggle, { type WorkspaceScope } from './WorkspaceScopeToggle';
+import StorageManagerModal from './StorageManagerModal';
 import { User } from '@supabase/supabase-js';
 import { type FactCheckReport } from '@/lib/gemini';
 
@@ -54,18 +57,32 @@ export default function WorkspaceLayout({
   const [sourceFilter, setSourceFilter] = useState('Tutte le Fonti');
   const [draftingMode, setDraftingMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentReflex, setCurrentReflex] = useState<string>('');
   
   const isPremium = user?.user_metadata?.is_premium === true;
   const [freeQueriesUsed, setFreeQueriesUsed] = useState<number>(user?.user_metadata?.free_queries_used || 0);
   const [guestQueriesUsed, setGuestQueriesUsed] = useState<number>(0);
+  // Phase 16: workspace scope toggle
+  const [workspaceScope, setWorkspaceScope] = useState<WorkspaceScope>('all');
+  // Phase 16: whether user belongs to a firm (determines toggle visibility)
+  const [hasFirm, setHasFirm] = useState(false);
+  // Phase 17: last free query CTA
+  const [showLastQueryCTA, setShowLastQueryCTA] = useState(false);
+  // Phase 19: Storage Manager
+  const [showStorageManager, setShowStorageManager] = useState(false);
   
   useEffect(() => {
-    // Load auth-less trial count from localStorage
     if (!user) {
-        const stored = localStorage.getItem('atena_guest_queries');
-        if (stored) setGuestQueriesUsed(parseInt(stored, 10));
+      const stored = localStorage.getItem('atena_guest_queries');
+      if (stored) setGuestQueriesUsed(parseInt(stored, 10));
+    } else if (isPremium) {
+      // Phase 16: check firm membership
+      fetch('/api/firm')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data?.firm?.id) setHasFirm(true); })
+        .catch(() => {});
     }
-  }, [user]);
+  }, [user, isPremium]);
 
   const freeQueriesLeft = Math.max(0, 10 - freeQueriesUsed);
   const guestQueriesLeft = Math.max(0, 3 - guestQueriesUsed);
@@ -75,6 +92,35 @@ export default function WorkspaceLayout({
   
   // Export states
   const [exportingIndex, setExportingIndex] = useState<{ drive?: number, mail?: number }>({});
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<number, 1 | -1>>({});
+
+  const handleFeedback = async (score: number, ai_response: string, user_query: string, msgIdx: number) => {
+    if (feedbackGiven[msgIdx]) return;
+    setFeedbackGiven(prev => ({ ...prev, [msgIdx]: score as 1 | -1 }));
+    try {
+      const res = await fetch('/api/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query_text: user_query, ai_response, user_feedback_score: score })
+      });
+      if (res.ok) {
+        alert(score > 0 ? 'Grazie! Questa interazione potrà diventare una Civic Lesson per la community. 🏛️' : 'Segnalazione ricevuta. Il Decimo Uomo analizzerà il caso.');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleCopy = async (content: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (e) {
+      console.error('Failed to copy', e);
+    }
+  };
 
   const handleDriveExport = async (content: string, index: number) => {
     if (!user) return onRequireAuth();
@@ -130,6 +176,31 @@ export default function WorkspaceLayout({
     }
   };
 
+  const handleDocxExport = async (content: string, index: number) => {
+    if (!user) return onRequireAuth();
+    if (!isPremium) return onRequirePro();
+    
+    try {
+       const res = await fetch('/api/export/docx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, title: `Atena_Atto_${new Date().toISOString().split('T')[0]}` })
+       });
+       if (!res.ok) throw new Error('Export fallito');
+       const blob = await res.blob();
+       const url = window.URL.createObjectURL(blob);
+       const a = document.createElement('a');
+       a.href = url;
+       a.download = `Atena_Atto_${new Date().toISOString().split('T')[0]}.docx`;
+       document.body.appendChild(a);
+       a.click();
+       window.URL.revokeObjectURL(url);
+    } catch (e) {
+       console.error(e);
+       alert('Errore durante la generazione del file .docx');
+    }
+  };
+
   // Altri stati
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -147,16 +218,22 @@ export default function WorkspaceLayout({
 
     if (!user) {
        // Guests cannot upload files
-       alert("Devi registrarti gratuitamente per analizzare documenti PDF.");
+       alert("Devi registrarti gratuitamente per analizzare documenti multi-pagina, foto o audio.");
        return onRequireAuth();
     }
 
-    if (file.type !== 'application/pdf') {
-       alert("Si prega di caricare solo file PDF per l'analisi.");
+    const isValidType = file.type === 'application/pdf' || file.type.startsWith('image/') || file.type.startsWith('audio/') || file.type.includes('word');
+    if (!isValidType) {
+       alert("Puoi caricare PDF, Immagini (es. foto di contratti) o File Audio (note vocali).");
        return;
     }
 
-    setMessages(prev => [...prev, { role: 'user', content: `📄 [Documento caricato: ${file.name}] Effettua un'analisi avanzata di questo documento.` }]);
+    let fileDesc = "Documento";
+    let icon = "📄";
+    if (file.type.startsWith('image/')) { fileDesc = "Immagine"; icon = "🖼️"; }
+    if (file.type.startsWith('audio/')) { fileDesc = "Nota Vocale"; icon = "🎙️"; }
+    
+    setMessages(prev => [...prev, { role: 'user', content: `${icon} [${fileDesc} allegato: ${file.name}] Effettua l'analisi richiesta su questo file.` }]);
     setLoading(true);
     setActiveArtifact(null); // Close canvas on new query
 
@@ -212,6 +289,7 @@ export default function WorkspaceLayout({
     setMessages(prev => [...prev, { role: 'user', content: userQuery }]);
     setQuery('');
     setLoading(true);
+    setCurrentReflex('');
     // Smooth transition: if we start a new thought, we might clear the canvas or keep it if it's relevant. Let's close it to focus on chat.
     if (window.innerWidth < 1024) setActiveArtifact(null); 
 
@@ -225,35 +303,71 @@ export default function WorkspaceLayout({
           query: userQuery, 
           sourceFilter: sourceFilter === 'Tutte le Fonti' ? null : sourceFilter,
           history: historyPayload,
-          draftingMode
+          draftingMode,
+          workspaceScope,  // Phase 16: pass scope to backend RAG
         }),
       });
-      const data = await res.json();
+
+      if (!res.ok) {
+        let errStr = "Errore di Sistema";
+        try { const j = await res.json(); errStr = j.error || errStr; } catch {}
+        setMessages(prev => [...prev, { role: 'assistant', content: `[Errore API]: ${errStr}` }]);
+        setLoading(false);
+        return;
+      }
       
-      if (data.error) {
-         if (data.error === 'QUOTA_EXCEEDED' || data.error === 'PREMIUM_REQUIRED') {
-            onRequirePro();
-            setMessages(prev => prev.slice(0, -1)); // Rimuovi il messaggio utente visto che è stato bloccato
-         } else {
-            setMessages(prev => [...prev, { role: 'assistant', content: `[Errore di Sistema]: ${data.error}` }]);
-         }
-      } else {
-         if (!isPremium) setFreeQueriesUsed(prev => prev + 1);
-         setMessages(prev => [...prev, { 
-           role: 'assistant', 
-           content: data.response, 
-           sources: data.sources, 
-           contra_analysis: data.contra_analysis, 
-           web_updates: data.web_updates,
-           legal_illustration: data.legal_illustration,
-           fact_check: data.fact_check
-         }]);
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      let done = false;
+      while (!done && reader) {
+        const { value, done: isDone } = await reader.read();
+        done = isDone;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const messagesRaw = chunk.split('\n\n').filter(Boolean);
+          for (const raw of messagesRaw) {
+             if (raw.trim().startsWith('data: ')) {
+                try {
+                   const parsed = JSON.parse(raw.trim().replace('data: ', ''));
+                   if (parsed.type === 'status') {
+                      setCurrentReflex(parsed.payload);
+                   } else if (parsed.type === 'result') {
+                      if (!isPremium) setFreeQueriesUsed(prev => prev + 1);
+                      setMessages(prev => [...prev, { 
+                        role: 'assistant', 
+                        content: parsed.payload.response, 
+                        sources: parsed.payload.sources, 
+                        contra_analysis: parsed.payload.contra_analysis, 
+                        web_updates: parsed.payload.web_updates,
+                        legal_illustration: parsed.payload.legal_illustration,
+                        fact_check: parsed.payload.fact_check
+                      }]);
+                   } else if (parsed.type === 'error_premium' || parsed.type === 'error_quota') {
+                      onRequirePro();
+                      setMessages(prev => prev.slice(0, -1));
+                   } else if (parsed.type === 'error_auth') {
+                      onRequireAuth();
+                      setMessages(prev => prev.slice(0, -1));
+                   } else if (parsed.type === 'error') {
+                      setMessages(prev => [...prev, { role: 'assistant', content: `[Errore Interno]: ${parsed.payload}` }]);
+                   } else if (parsed.type === 'last_free_query') {
+                      // Phase 17: show last query CTA overlay
+                      setShowLastQueryCTA(true);
+                   }
+                } catch (_e) { 
+                   // Ignora chunk malformati intermedi 
+                }
+             }
+          }
+        }
       }
     } catch (err) {
       console.error(err);
       setMessages(prev => [...prev, { role: 'assistant', content: "Errore di rete." }]);
     } finally {
       setLoading(false);
+      setCurrentReflex('');
     }
   };
 
@@ -316,11 +430,9 @@ export default function WorkspaceLayout({
             ))}
           </div>
         );
-      case 'mindmap':
-        // eslint-disable-next-line no-case-declarations
+      case 'mindmap': {
         const rawMindmap = activeArtifact.data as Record<string, unknown>;
         // Handle both flat {nodes, edges} and nested {data: {nodes, edges}} from agent
-        // eslint-disable-next-line no-case-declarations
         const mindmapData = (rawMindmap?.nodes ? rawMindmap : rawMindmap?.data ? rawMindmap.data : rawMindmap) as { nodes: Record<string, unknown>[], edges: Record<string, unknown>[] };
         return (
           <div className="w-full h-[600px] bg-marble-50/50 rounded-[32px] overflow-hidden border border-marble-200 relative">
@@ -330,6 +442,7 @@ export default function WorkspaceLayout({
             />
           </div>
         );
+      }
       case 'illustration':
         return (
           <div className="flex flex-col gap-4 animate-fade-in-up">
@@ -425,12 +538,36 @@ export default function WorkspaceLayout({
                               )}
 
                               {/* EXPORT ACTIONS */}
+                              <div className="mr-auto flex gap-1 items-center">
+                                 <button onClick={() => {
+                                   const uMsg = messages.slice(0, idx).reverse().find(m => m.role === 'user')?.content || 'Ricerca';
+                                   handleFeedback(1, message.content, uMsg, idx);
+                                 }} disabled={feedbackGiven[idx] !== undefined} className={`p-2 rounded-full transition-colors ${feedbackGiven[idx] === 1 ? 'bg-emerald-100 text-emerald-600 shadow-sm' : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-600'} disabled:opacity-80`} title="Valida come Civic Lesson">
+                                   <ThumbsUp className={`w-4 h-4 ${feedbackGiven[idx] === 1 ? 'fill-current' : ''}`} />
+                                 </button>
+                                 <button onClick={() => {
+                                   const uMsg = messages.slice(0, idx).reverse().find(m => m.role === 'user')?.content || 'Ricerca';
+                                   handleFeedback(-1, message.content, uMsg, idx);
+                                 }} disabled={feedbackGiven[idx] !== undefined} className={`p-2 rounded-full transition-colors ${feedbackGiven[idx] === -1 ? 'bg-rose-100 text-rose-600 shadow-sm' : 'text-slate-400 hover:bg-rose-50 hover:text-rose-600'} disabled:opacity-80`} title="Segnala Inaccuratezza">
+                                   <ThumbsDown className={`w-4 h-4 ${feedbackGiven[idx] === -1 ? 'fill-current' : ''}`} />
+                                 </button>
+                              </div>
                               <div className="ml-auto flex gap-2">
+                                 <button onClick={() => handleDocxExport(message.content, idx)} className="px-3 py-1.5 rounded-[20px] border border-marble-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-xs flex items-center gap-1.5 transition-colors shadow-sm bg-white">
+                                    {!isPremium && <Lock className="w-3 h-3 text-amber-500" />}
+                                    <FileText className="w-3.5 h-3.5" /> .DOCX
+                                 </button>
+                                 <button onClick={() => handleCopy(message.content, idx)} className="px-3 py-1.5 rounded-[20px] border border-marble-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-xs flex items-center gap-1.5 transition-colors shadow-sm bg-white">
+                                    {copiedIndex === idx ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />} 
+                                    {copiedIndex === idx ? 'Copiato!' : 'Copia'}
+                                 </button>
                                  <button onClick={() => handleDriveExport(message.content, idx)} disabled={exportingIndex.drive === idx} className="px-3 py-1.5 rounded-[20px] border border-marble-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm bg-white">
+                                    {!isPremium && <Lock className="w-3 h-3 text-amber-500" />}
                                     <Cloud className={`w-3.5 h-3.5 ${exportingIndex.drive === idx ? 'animate-bounce' : ''}`} /> 
                                     {exportingIndex.drive === idx ? 'Salvataggio...' : 'Drive'}
                                  </button>
                                  <button onClick={() => handleEmailExport(message.content, idx)} disabled={exportingIndex.mail === idx} className="px-3 py-1.5 rounded-[20px] border border-marble-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm bg-white">
+                                    {!isPremium && <Lock className="w-3 h-3 text-amber-500" />}
                                     <Mail className={`w-3.5 h-3.5 ${exportingIndex.mail === idx ? 'animate-pulse' : ''}`} /> 
                                     {exportingIndex.mail === idx ? 'Invio...' : 'Email'}
                                  </button>
@@ -443,10 +580,49 @@ export default function WorkspaceLayout({
                  ))}
                  
                  {loading && (
-                   <div className="flex w-full justify-start animate-fade-in-up">
+                   <div className="flex flex-col w-full justify-start animate-fade-in-up relative pb-2">
                      <ThinkingIndicator />
+                     {currentReflex && (
+                        <div className="mt-3 sm:ml-12 px-5 py-3.5 bg-slate-900 border border-slate-700/60 rounded-xl rounded-tl-sm w-fit max-w-[85%] shadow-2xl shadow-emerald-900/10 flex items-center gap-4 animate-fade-in-up">
+                          <div className="flex flex-col items-center justify-center">
+                             <Terminal className="w-4 h-4 text-emerald-400 opacity-80" />
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                             <span className="text-[9px] font-bold text-slate-400/80 uppercase tracking-widest">Atena Internal Monologue</span>
+                             <span className="text-[12px] font-mono text-emerald-400 tracking-tight leading-snug break-words max-w-full flex items-center gap-2">
+                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                               {currentReflex}
+                               <span className="animate-pulse opacity-70">_</span>
+                             </span>
+                          </div>
+                        </div>
+                     )}
                    </div>
                  )}
+                 {/* Phase 17: Last Query Free Trial CTA Overlay */}
+                 {showLastQueryCTA && (
+                   <div className="w-full max-w-3xl mx-auto mt-6 mb-12 p-8 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-[32px] shadow-2xl shadow-indigo-500/10 border border-indigo-500/30 text-white flex flex-col items-center text-center animate-fade-in-up relative overflow-hidden">
+                     <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                     <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
+                     
+                     <h3 className="text-2xl font-bold mb-3 relative z-10 flex items-center gap-3">
+                       <span className="text-3xl">✨</span> Hai completato il periodo esplorativo.
+                     </h3>
+                     <p className="text-base text-slate-300 mb-8 max-w-lg relative z-10 leading-relaxed font-light">
+                       Questa era la tua decima interazione. Sblocca tutto il potenziale di Atena con LexAI Pro. Nessun limite, memoria continua e risposte advanced.
+                     </p>
+                     
+                     <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full justify-center items-center">
+                       <button onClick={() => setShowLastQueryCTA(false)} className="px-6 py-3 rounded-2xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
+                         Forse dopo
+                       </button>
+                       <button onClick={() => window.location.href = '/checkout?trial=true'} className="px-8 py-3 rounded-2xl text-sm font-bold bg-white text-slate-900 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all cursor-pointer">
+                         Inizia Prova di 3 Giorni
+                       </button>
+                     </div>
+                   </div>
+                 )}
+
                  <div ref={messagesEndRef} />
                </div>
             )}
@@ -481,6 +657,27 @@ export default function WorkspaceLayout({
                    </button>
                  )}
                  
+                 {/* Phase 16: Dual Workspace Scope Toggle — firm members only */}
+                 {isPremium && hasFirm && (
+                   <WorkspaceScopeToggle
+                     scope={workspaceScope}
+                     onChange={setWorkspaceScope}
+                     hasFirm={hasFirm}
+                     className="ml-1"
+                   />
+                 )}
+
+                 {/* Phase 19: Premium Storage Meter Toggle */}
+                 {isPremium && (
+                   <div 
+                     className="ml-auto px-3 py-1.5 rounded-[24px] bg-white text-[10px] font-bold text-slate-600 flex items-center gap-1.5 border border-marble-200 shadow-sm whitespace-nowrap cursor-pointer hover:bg-slate-50 transition-colors hidden sm:flex"
+                     onClick={() => setShowStorageManager(true)}
+                   >
+                     <Database className="w-3.5 h-3.5 text-indigo-500" />
+                     Gestione Spazio
+                   </div>
+                 )}
+
                  {(!isPremium && user) && (
                    <div className="ml-auto px-3 py-1.5 rounded-[24px] bg-white text-[10px] font-bold text-slate-500 flex items-center gap-1.5 border border-marble-200 shadow-sm whitespace-nowrap hidden sm:flex">
                      <div className={`w-1.5 h-1.5 rounded-full ${freeQueriesLeft > 0 ? 'bg-emerald-400' : 'bg-rose-500'} ${freeQueriesLeft > 0 ? 'animate-pulse' : ''} shadow-sm`}></div>
@@ -496,19 +693,29 @@ export default function WorkspaceLayout({
                </div>
 
                <form onSubmit={handleSearch} className="relative flex items-center bg-white/90 backdrop-blur-2xl border border-marble-200 rounded-[24px] p-2 shadow-lg focus-within:border-platinum-300 transition-all">
-                  <input
-                    type="text"
+                  <textarea
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Interroga la Dea o esplora la giurisprudenza..."
-                    className="w-full bg-transparent border-none text-base text-slate-800 placeholder-slate-400 focus:ring-0 px-4 py-3 outline-none"
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (query.trim() && !loading) handleSearch(e as unknown as React.FormEvent);
+                      }
+                    }}
+                    placeholder="Interroga la Dea o esplora la giurisprudenza... (Shift+Enter per andare a capo)"
+                    className="w-full bg-transparent border-none text-base text-slate-800 placeholder-slate-400 focus:ring-0 px-4 py-3 outline-none resize-none min-h-[48px] overflow-y-auto custom-scrollbar"
                     disabled={loading}
+                    rows={1}
                   />
-                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="application/pdf" className="hidden" />
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-slate-400 hover:text-slate-600 transition-colors" disabled={loading}>
-                    <FileText className="w-5 h-5" />
+                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="application/pdf,image/*,audio/*" className="hidden" />
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-slate-400 hover:text-slate-600 transition-colors self-end" disabled={loading} title="Allega Documento, Foto o Audio">
+                    <Paperclip className="w-5 h-5" />
                   </button>
-                  <button type="submit" disabled={loading || !query.trim()} className="p-3 ml-1 bg-slate-900 text-white rounded-[20px] hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:hover:translate-y-0 flex items-center justify-center shadow-md">
+                  <button type="submit" disabled={loading || !query.trim()} className="p-3 ml-1 bg-slate-900 text-white rounded-[20px] hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:hover:translate-y-0 flex items-center justify-center shadow-md self-end">
                     <Search className="w-5 h-5" strokeWidth={3} />
                   </button>
                </form>
@@ -555,6 +762,14 @@ export default function WorkspaceLayout({
          )}
       </div>
 
+      <AnimatePresence>
+        {showStorageManager && (
+          <StorageManagerModal 
+            isOpen={showStorageManager} 
+            onClose={() => setShowStorageManager(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

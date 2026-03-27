@@ -58,7 +58,7 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-slate-900/25 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
         onClick={onClose}
       >
         {/* Modal */}
@@ -72,19 +72,19 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
           className="glass-modal rounded-[28px] w-full max-w-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="px-8 pt-8 pb-6 border-b border-slate-100 flex items-start justify-between">
+          <div className="px-8 pt-8 pb-6 border-b border-white/10 flex items-start justify-between">
             <div>
-              <div className="gold-badge mb-3">Premium</div>
-              <h2 className="text-2xl font-bold text-slate-900 font-serif tracking-tight">
+              <div className="gold-badge mb-3">LexAI Pro</div>
+              <h2 className="text-2xl font-bold text-white font-serif tracking-tight">
                 Dall&apos;accesso base all&apos;intelligence legale completa.
               </h2>
-              <p className="text-sm text-slate-500 mt-1.5">
+              <p className="text-sm text-[#98989D] mt-1.5">
                 Sblocca tutto l&apos;ecosistema Atena · Cancelli in qualsiasi momento.
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors ml-4 shrink-0"
+              className="p-2 rounded-xl hover:bg-white/10 text-[#636366] hover:text-white transition-colors ml-4 shrink-0"
             >
               <IconX size={18} />
             </button>
@@ -94,21 +94,21 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
 
             {/* Left — Feature Comparison */}
-            <div className="p-8 border-r border-slate-100">
-              <p className="text-[11px] font-mono uppercase tracking-widest text-slate-400 mb-5">Confronto Piano</p>
+            <div className="p-8 border-r border-white/10">
+              <p className="text-[11px] font-mono uppercase tracking-widest text-[#636366] mb-5">Confronto Piano</p>
               <div className="space-y-3">
                 {FREE_FEATURES.map(f => (
                   <div key={f.label} className="flex items-center gap-3">
                     {f.included ? (
-                      <div className="w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
-                        <IconCheck size={11} className="text-emerald-600" strokeWidth={2.5} />
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                        <IconCheck size={11} className="text-emerald-400" strokeWidth={2.5} />
                       </div>
                     ) : (
-                      <div className="w-5 h-5 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
-                        <IconLock size={10} className="text-slate-300" />
+                      <div className="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                        <IconLock size={10} className="text-[#636366]" />
                       </div>
                     )}
-                    <span className={`text-sm ${f.included ? 'text-slate-700' : 'text-slate-400 line-through'}`}>
+                    <span className={`text-sm ${f.included ? 'text-white' : 'text-[#636366] line-through'}`}>
                       {f.label}
                     </span>
                   </div>
@@ -116,39 +116,39 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
               </div>
 
               {/* Social proof */}
-              <div className="mt-6 pt-5 border-t border-slate-100 flex items-center gap-3">
+              <div className="mt-6 pt-5 border-t border-white/10 flex items-center gap-3">
                 <div className="flex -space-x-2">
                   {['A', 'M', 'L', 'G'].map((l, i) => (
-                    <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-white flex items-center justify-center text-[9px] font-bold text-slate-600">
+                    <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-[#2C2C2E] to-[#1C1C1E] border-2 border-white/10 flex items-center justify-center text-[9px] font-bold text-[#98989D]">
                       {l}
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-slate-500 font-medium">
-                  <span className="text-slate-800 font-bold">247+ avvocati</span> già su Atena Premium
+                <p className="text-xs text-[#98989D] font-medium">
+                  <span className="text-white font-bold">247+ avvocati</span> già su LexAI Pro
                 </p>
               </div>
             </div>
 
             {/* Right — Pricing Card */}
-            <div className="p-8 bg-[#FAFAF8] flex flex-col">
-              <p className="text-[11px] font-mono uppercase tracking-widest text-slate-400 mb-5">Piano Premium</p>
+            <div className="p-8 bg-[#1C1C1E]/50 flex flex-col">
+              <p className="text-[11px] font-mono uppercase tracking-widest text-[#007AFF] mb-5 font-bold">Pro Tier</p>
 
               {/* Price */}
               <div className="mb-6">
                 <div className="flex items-end gap-1.5">
-                  <span className="text-4xl font-black text-slate-900 font-serif">€29</span>
-                  <span className="text-sm text-slate-400 mb-1.5 font-medium">/mese · + IVA</span>
+                  <span className="text-4xl font-black text-white font-serif">€29</span>
+                  <span className="text-sm text-[#98989D] mb-1.5 font-medium">/mese · + IVA</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">Oppure €249/anno (risparmia il 28%)</p>
+                <p className="text-xs text-[#5AC8FA] mt-1">Oppure €249/anno (risparmia il 28%)</p>
               </div>
 
               {/* Premium features list */}
               <div className="space-y-2.5 mb-8 flex-1">
                 {PREMIUM_FEATURES.map(f => (
                   <div key={f} className="flex items-center gap-2.5">
-                    <IconSparkles size={13} className="text-[#C9A84C] shrink-0" />
-                    <span className="text-sm text-slate-700">{f}</span>
+                    <IconSparkles size={13} className="text-[#5AC8FA] shrink-0" />
+                    <span className="text-sm text-white">{f}</span>
                   </div>
                 ))}
               </div>
@@ -164,11 +164,11 @@ export default function SubscriptionModal({ onClose, userEmail }: SubscriptionMo
 
               {/* Trust signals */}
               <div className="mt-4 flex items-center justify-center gap-4">
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                <div className="flex items-center gap-1.5 text-[10px] text-[#636366]">
                   <IconCreditCard size={12} />
                   Stripe · Pagamento Sicuro
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                <div className="flex items-center gap-1.5 text-[10px] text-[#636366]">
                   <IconShieldCheck size={12} />
                   Cancella quando vuoi
                 </div>
